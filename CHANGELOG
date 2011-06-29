@@ -1,0 +1,31 @@
+* 2011/06/28 v1.04 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Project renamed to openufp (Open URL Filtering Proxy)
+  Moved frontend and backend support code in own files
+  Added websense frontend support
+  Added blacklist backend option but not yet complete
+
+* 2011/06/19 v1.03 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Added redirect url option when client url has been denied.
+  Fixed n2h2 header sizes for sending, the big size were causing
+  problems for some old Cisco PIX hardware
+  Cleaned up code and made it more readable
+  Created struct n2h2_req to store all request info
+
+  Special thanks to Martijn Langendoen for testing and
+  Merijntje Tak who has provided me with a 1337 test environment
+
+* 2011/06/17 v1.02 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Version major changed.
+  Using getopt for commandline option handling.
+  Better error handling and logging by syslog.
+  Added local port option.
+  Added debug level option.
+  Daemonized.
+
+* 0.02 - Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Changed default CFLAGS in Makefile
+  Using fflush for using output redirection.
+  Added SIGCHLD handling for dead child's.
+
+* 0.01 - Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Original code init.

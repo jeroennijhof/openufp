@@ -1,0 +1,9 @@
+TODO
+
+HIGH
+- Do far more websense testing and add redirect support
+
+LOW
+- Add a redirect url file where you can define differend redirect urls per source ip
+- Add tcp spoof option so you can use the client ip to connect to the proxy server,
+  this requires the use of raw socket.
