@@ -30,9 +30,11 @@ int blacklist_backend(char *blacklist, char blacklist_url[URL]) {
             continue;
         }
         if((strstr(blacklist_url, url)) != NULL) {
+            fclose(fd);
             return 1;
         }
     }
+    fclose(fd);
     return 0;
 }
 
