@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <syslog.h>
 
-#define VERSION "1.04"
+#define VERSION "1.05"
 #define URL 65536
 #define USER 512
 #define REQ 26+URL+USER
@@ -29,7 +29,8 @@ struct uf_request {
 
 // frontends
 #include "n2h2.h"
+#include "websense.h"
 
 // backends
+#include "blacklist.h"
 #include "proxy.h"
-#include "websense.h"

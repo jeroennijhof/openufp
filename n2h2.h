@@ -1,7 +1,6 @@
 /* openufp server
  *
  * author: Jeroen Nijhof
- * version: 1.04
  * license: GPL v3.0
  *
  * n2h2.h: n2h2 frontend

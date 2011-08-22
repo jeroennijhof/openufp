@@ -1,8 +1,10 @@
+* 2011/08/22 v1.05 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Added blacklist backend support
+  
 * 2011/06/28 v1.04 Jeroen Nijhof <jeroen@nijhofnet.nl>
   Project renamed to openufp (Open URL Filtering Proxy)
   Moved frontend and backend support code in own files
   Added websense frontend support
-  Added blacklist backend option but not yet complete
 
 * 2011/06/19 v1.03 Jeroen Nijhof <jeroen@nijhofnet.nl>
   Added redirect url option when client url has been denied.

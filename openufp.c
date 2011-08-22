@@ -1,7 +1,6 @@
 /* openufp server
  *
  * author: Jeroen Nijhof
- * version: 1.04
  * license: GPL v3.0
  *
  * This server translates n2h2 or websense requests to different backends.
@@ -51,6 +50,7 @@ int main(int argc, char**argv) {
     char mesg[REQ];
     struct uf_request request;
     pid_t pid, child_pid;
+    int denied = 0;
     int frontend = 0;
     char *p;
     char *proxy_ip = NULL;
@@ -185,29 +185,32 @@ int main(int argc, char**argv) {
                         if (debug > 1)
                             syslog(LOG_INFO, "received url request");
 
-                        // parse url to proxy
-                        if (proxy_ip != NULL) {
-                            if (proxy_backend(proxy_ip, proxy_port, proxy_deny_pattern, request.url) == 0) {
-                                if (frontend == N2H2) {
-                                    n2h2_accept(cli_fd, cli_addr, request.id);
-                                } else {
-                                    websns_accept(cli_fd, cli_addr, request.id);
-                                }
-                                if (debug > 1)
-                                    syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s", request.srcip, request.dstip, request.url);
-                            } else {
-                                if (frontend == N2H2) {
-                                    n2h2_deny(cli_fd, cli_addr, request.id, redirect_url);
-                                } else {
-                                    websns_deny(cli_fd, cli_addr, request.id);
-                                }
-                                if (debug > 1)
-                                    syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s", request.srcip, request.dstip, request.url);
-                            }
+                        // parse url to blacklist
+                        if (!denied && blacklist != NULL) {
+                            denied = blacklist_backend(blacklist, request.url);
                         }
 
-                        // parse url to blacklist
-                        if (blacklist != NULL) {
+                        // parse url to proxy
+                        if (!denied && proxy_ip != NULL) {
+                            denied = proxy_backend(proxy_ip, proxy_port, proxy_deny_pattern, request.url);
+                        }
+
+                        if (denied) {
+                            if (frontend == N2H2) {
+                                n2h2_deny(cli_fd, cli_addr, request.id, redirect_url);
+                            } else {
+                                websns_deny(cli_fd, cli_addr, request.id);
+                            }
+                            if (debug > 1)
+                                syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s", request.srcip, request.dstip, request.url);
+                        } else {
+                            if (frontend == N2H2) {
+                                n2h2_accept(cli_fd, cli_addr, request.id);
+                            } else {
+                                websns_accept(cli_fd, cli_addr, request.id);
+                            }
+                            if (debug > 1)
+                                syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s", request.srcip, request.dstip, request.url);
                         }
                     }
                 }

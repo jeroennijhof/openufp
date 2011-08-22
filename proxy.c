@@ -1,7 +1,6 @@
 /* openufp server
  *
  * author: Jeroen Nijhof
- * version: 1.04
  * license: GPL v3.0
  *
  * proxy.c: proxy backend
@@ -21,7 +20,7 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
 
     // return accept if socket failes
     if ((proxy_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        syslog(LOG_WARNING, "proxy socket creation failed.");
+        syslog(LOG_WARNING, "proxy: socket creation failed.");
         return 0;
     }
 
@@ -32,7 +31,7 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
 
     // return accept if connect failes
     if (connect(proxy_fd, (struct sockaddr *) &proxy_addr, sizeof(proxy_addr)) < 0) {
-        syslog(LOG_WARNING, "connecting to proxy failed.");
+        syslog(LOG_WARNING, "proxy: connecting to proxy failed.");
         close(proxy_fd);
         return 0;
     }
@@ -44,7 +43,7 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
 
     // Send the request to the proxy server, return accept if failes
     if (send(proxy_fd, proxy_req, proxy_req_len, 0) != proxy_req_len) {
-        syslog(LOG_WARNING, "error while sending request to proxy.");
+        syslog(LOG_WARNING, "proxy: error while sending request to proxy.");
         close(proxy_fd);
         return 0;
     }
@@ -52,7 +51,7 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
     // Recieve the proxy results
     bzero(proxy_res, sizeof(proxy_res));
     if ((nbytes = recv(proxy_fd, proxy_res, PRXYRES, MSG_WAITALL)) < 1) {
-        syslog(LOG_WARNING, "error while receiving response from proxy.");
+        syslog(LOG_WARNING, "proxy: error while receiving response from proxy.");
         close(proxy_fd);
         return 0;
     }

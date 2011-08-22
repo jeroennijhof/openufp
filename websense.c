@@ -1,7 +1,6 @@
 /* openufp server
  *
  * author: Jeroen Nijhof
- * version: 1.04
  * license: GPL v3.0
  *
  * websense.c: websense frontend
