@@ -14,6 +14,11 @@ int blacklist_backend(char *blacklist, char blacklist_url[URL]) {
     int linenum = 0;
 
     fd = fopen(blacklist, "r");
+    if (fd == NULL) {
+        syslog(LOG_WARNING, "blacklist: could not open file %s", blacklist);
+        return 0;
+    }
+
     while (fgets(line, 256, fd) != NULL) {
         char url[256];
 
