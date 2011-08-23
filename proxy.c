@@ -16,8 +16,6 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
     char proxy_res[PRXYRES];
     char proxy_req[URL+17];
 
-    return 1;
-
     // return accept if socket failes
     if ((proxy_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
         syslog(LOG_WARNING, "proxy: socket creation failed.");
@@ -62,8 +60,6 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
     proxy_res[nbytes] = '\0';
     if((strstr(proxy_res, proxy_deny_pattern)) != NULL) {
        return 1;
-    } else {
-       return 0;
     }
 
     return 0;
