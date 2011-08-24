@@ -53,7 +53,7 @@ void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
 
 struct uf_request websns_request(char mesg[REQ]) {
     // URL Request reqlen(2),reqid(10),code(2),descr(2),srcip(4),dstip(4),urllen(2),url(urllen)
-    struct uf_request request;
+    struct uf_request request = {"", 0, "", "", 0, "", 0, ""};
     int ips[8];
     int i;
 

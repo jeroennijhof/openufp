@@ -72,7 +72,7 @@ void n2h2_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *re
 
 struct uf_request n2h2_request(char mesg[REQ]) {
     // URL Request req(2),reqid(4),srcip(4),dstip(4),urllen(2),usrlen(2),url(urllen),user(usrlen)
-    struct uf_request request;
+    struct uf_request request = {"", 0, "", "", 0, "", 0, ""};
     int ips[8];
     int i;
 
