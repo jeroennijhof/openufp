@@ -8,28 +8,32 @@
 
 #include "openufp.h"
 
-int blacklist_backend(char *blacklist, char blacklist_url[URL]) {
-    char line[256];
-    FILE *fd;
+int blacklist_backend(char *blacklist, char url[URL], int debug) {
+    char line[URL];
+    FILE *fd = NULL;
     int linenum = 0;
 
     fd = fopen(blacklist, "r");
     if (fd == NULL) {
-        syslog(LOG_WARNING, "blacklist: could not open file %s", blacklist);
+        syslog(LOG_WARNING, "blacklist: could not open file %s.", blacklist);
         return 0;
     }
 
-    while (fgets(line, 256, fd) != NULL) {
-        char url[256];
+    while (fgets(line, sizeof(line)-1, fd) != NULL) {
+        char blacklist_url[URL];
 
         linenum++;
         if (line[0] == '#' || line[0] == '\n') continue;
 
-        if (sscanf(line, "%s", url) != 1) {
-            syslog(LOG_WARNING, "blacklist: syntax error, line %d\n", linenum);
+        if (sscanf(line, "%s", blacklist_url) != 1) {
+            syslog(LOG_WARNING, "blacklist: syntax error, line %d.", linenum);
             continue;
         }
-        if((strstr(blacklist_url, url)) != NULL) {
+        if (debug > 2)
+            syslog(LOG_INFO, "blacklist: url (%s).", blacklist_url);
+        if ((strstr(url, blacklist_url)) != NULL) {
+            if (debug > 1)
+                syslog(LOG_INFO, "blacklist: url blocked.");
             fclose(fd);
             return 1;
         }

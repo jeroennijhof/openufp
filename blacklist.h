@@ -6,5 +6,5 @@
  * blacklist.h: blacklist backend
  */
 
-extern int blacklist_backend(char *blacklist, char blacklist_url[URL]);
+extern int blacklist_backend(char *blacklist, char url[URL], int debug);
 

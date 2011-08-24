@@ -9,7 +9,7 @@ SBINDIR=/usr/sbin
 all:	openufp
 
 openufp:
-		$(CC) $(CFLAGS) openufp.c n2h2.c websense.c blacklist.c proxy.c -o $@
+		$(CC) $(CFLAGS) openufp.c n2h2.c websense.c blacklist.c proxy.c squidguard.c -o $@
 
 install:	openufp
 		install -c -o $(OWNER) -g $(GROUP) -m 755 openufp $(SBINDIR)

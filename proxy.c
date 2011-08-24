@@ -8,10 +8,10 @@
 
 #include "openufp.h"
 
-int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char proxy_url[URL]) {
-    int proxy_fd;
-    int proxy_req_len;
-    int nbytes;
+int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char url[URL], int debug) {
+    int proxy_fd = -1;
+    int proxy_req_len = 0;
+    int nbytes = 0;
     struct sockaddr_in proxy_addr;
     char proxy_res[PRXYRES];
     char proxy_req[URL+17];
@@ -36,7 +36,7 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
 
     // create proxy request
     bzero(proxy_req, sizeof(proxy_req));
-    sprintf(proxy_req,"%s%s%s\r\n\r\n", "GET ", proxy_url, " HTTP/1.0");
+    sprintf(proxy_req,"%s%s%s", "GET ", url, " HTTP/1.0\r\n\r\n");
     proxy_req_len = strlen(proxy_req);
 
     // Send the request to the proxy server, return accept if failes
@@ -58,7 +58,11 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
  
     // check if the proxy is denying the page by the matched string
     proxy_res[nbytes] = '\0';
+    if (debug > 2)
+        syslog(LOG_INFO, "proxy: result (%s).", proxy_res);
     if((strstr(proxy_res, proxy_deny_pattern)) != NULL) {
+       if (debug > 1)
+           syslog(LOG_INFO, "proxy: url blocked.");
        return 1;
     }
 

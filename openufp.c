@@ -32,7 +32,8 @@ void usage() {
     printf("             PORT is the portnumber where the proxy server is listening on\n");
     printf("             DENY_PATTERN is a piece of text that should match the deny page\n");
     printf("   -f FILE   use the blacklist file backend\n");
-    printf("             FILE is a file which contains blacklisted urls\n\n");
+    printf("             FILE is a file which contains blacklisted urls\n");
+    printf("   -g        use the squidGuard backend\n\n");
     printf("Version: %s\n", VERSION);
     printf("Report bugs to: jeroen@nijhofnet.nl\n");
 }
@@ -57,8 +58,9 @@ int main(int argc, char**argv) {
     int proxy_port = 0;
     char *proxy_deny_pattern = NULL;
     char *blacklist = NULL;
+    int squidguard  = 0;
 
-    while ((c = getopt(argc, argv, "l:r:d:nwp:f:")) != -1) {
+    while ((c = getopt(argc, argv, "l:r:d:nwp:f:g")) != -1) {
         switch(c) {
             case 'l':
                 local_port = atoi(optarg);
@@ -92,12 +94,15 @@ int main(int argc, char**argv) {
             case 'f':
                 blacklist = optarg;
                 break;
+            case 'g':
+                squidguard = 1;
+                break;
             default:
                 usage();
                 exit(1);
         }
     }
-    if (frontend == 0 || ((proxy_ip == NULL || proxy_port == 0 || proxy_deny_pattern == NULL) && blacklist == NULL)) {
+    if (frontend == 0 || ((proxy_ip == NULL || proxy_port == 0 || proxy_deny_pattern == NULL) && blacklist == NULL && squidguard == 0)) {
         usage();
         exit(1);
     }
@@ -153,7 +158,7 @@ int main(int argc, char**argv) {
             cli_size = sizeof(cli_addr);
             cli_fd = accept(openufp_fd, (struct sockaddr *)&cli_addr, &cli_size);
             if (debug > 1)
-                syslog(LOG_INFO, "client connection accepted");
+                syslog(LOG_INFO, "client connection accepted.");
 
             if ((child_pid = fork()) == 0) {
                 close(openufp_fd);
@@ -162,7 +167,7 @@ int main(int argc, char**argv) {
                     bzero(&mesg, sizeof(mesg));
                     nbytes = recvfrom(cli_fd, mesg, REQ, 0, (struct sockaddr *)&cli_addr, &cli_size);
                     if (nbytes < 6) {
-                        syslog(LOG_WARNING, "wrong request, closing connection");
+                        syslog(LOG_WARNING, "wrong request, received %d byte(s) only, closing connection.", nbytes);
                         close(cli_fd);
                         exit(1);
                     }
@@ -176,23 +181,28 @@ int main(int argc, char**argv) {
                     // Alive Request
                     if (request.type == N2H2ALIVE) {
                         if (debug > 2)
-                            syslog(LOG_INFO, "received alive request, sending alive response");
+                            syslog(LOG_INFO, "received alive request, sending alive response.");
                         n2h2_alive(cli_fd, cli_addr, request.id);
                     }
 
                     // URL Request
                     if (request.type == N2H2REQ || request.type == WEBSNSREQ) {
                         if (debug > 1)
-                            syslog(LOG_INFO, "received url request");
+                            syslog(LOG_INFO, "received url request.");
 
                         // parse url to blacklist
                         if (!denied && blacklist != NULL) {
-                            denied = blacklist_backend(blacklist, request.url);
+                            denied = blacklist_backend(blacklist, request.url, debug);
                         }
 
                         // parse url to proxy
                         if (!denied && proxy_ip != NULL) {
-                            denied = proxy_backend(proxy_ip, proxy_port, proxy_deny_pattern, request.url);
+                            denied = proxy_backend(proxy_ip, proxy_port, proxy_deny_pattern, request.url, debug);
+                        }
+
+                        // parse url to proxy
+                        if (!denied && squidguard != 0) {
+                            denied = squidguard_backend(request.srcip, request.url, debug);
                         }
 
                         if (denied) {
@@ -202,7 +212,7 @@ int main(int argc, char**argv) {
                                 websns_deny(cli_fd, cli_addr, request.id);
                             }
                             if (debug > 1)
-                                syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s", request.srcip, request.dstip, request.url);
+                                syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
                         } else {
                             if (frontend == N2H2) {
                                 n2h2_accept(cli_fd, cli_addr, request.id);
@@ -210,7 +220,7 @@ int main(int argc, char**argv) {
                                 websns_accept(cli_fd, cli_addr, request.id);
                             }
                             if (debug > 1)
-                                syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s", request.srcip, request.dstip, request.url);
+                                syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
                         }
                     }
                 }

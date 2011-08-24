@@ -96,8 +96,8 @@ struct uf_request n2h2_request(char mesg[REQ]) {
     }
     bzero(request.srcip, sizeof(request.srcip));
     bzero(request.dstip, sizeof(request.dstip));
-    sprintf(request.srcip,"%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
-    sprintf(request.dstip,"%d.%d.%d.%d", ips[4], ips[5], ips[6], ips[7]);
+    sprintf(request.srcip, "%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
+    sprintf(request.dstip, "%d.%d.%d.%d", ips[4], ips[5], ips[6], ips[7]);
 
     // fetch url length
     request.urllen = (mesg[14]*256) + mesg[15];
