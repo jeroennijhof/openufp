@@ -35,3 +35,4 @@ struct uf_request {
 #include "blacklist.h"
 #include "proxy.h"
 #include "squidguard.h"
+

@@ -15,7 +15,7 @@
 
 #include "openufp.h"
 
-// Functions
+// Helper functions
 void usage() {
     printf("Usage: openufp [OPTIONS] <-n|-w> <BACKEND>\n");
     printf("Example: openufp -n -p '192.168.1.10:3128:Access Denied.'\n\n");
@@ -39,28 +39,24 @@ void usage() {
 }
 
 
-// Main routine
+// Main function
 int main(int argc, char**argv) {
-    int openufp_fd, cli_fd;
-    struct sockaddr_in openufp_addr, cli_addr;
-    socklen_t cli_size;
-    int c, nbytes;
-    int local_port = 0;
-    int debug = 1;
-    char *redirect_url = NULL;
-    char mesg[REQ];
-    struct uf_request request;
+    int openufp_fd;
     pid_t pid, child_pid;
-    int denied = 0;
+    struct sockaddr_in openufp_addr;
+    int local_port = 0;
+    char *redirect_url = NULL;
+    int debug = 1;
     int frontend = 0;
-    char *p;
     char *proxy_ip = NULL;
     int proxy_port = 0;
     char *proxy_deny_pattern = NULL;
     char *blacklist = NULL;
-    int squidguard  = 0;
+    int squidguard = 0;
 
+    int c;
     while ((c = getopt(argc, argv, "l:r:d:nwp:f:g")) != -1) {
+        char *p;
         switch(c) {
             case 'l':
                 local_port = atoi(optarg);
@@ -102,7 +98,8 @@ int main(int argc, char**argv) {
                 exit(1);
         }
     }
-    if (frontend == 0 || ((proxy_ip == NULL || proxy_port == 0 || proxy_deny_pattern == NULL) && blacklist == NULL && squidguard == 0)) {
+    if (frontend == 0 || ((proxy_ip == NULL || proxy_port == 0 || proxy_deny_pattern == NULL)
+                    && blacklist == NULL && squidguard == 0)) {
         usage();
         exit(1);
     }
@@ -154,6 +151,10 @@ int main(int argc, char**argv) {
     syslog(LOG_INFO, "started listening on %d, waiting for requests...", local_port); 
 
     if ((pid = fork()) == 0) {
+        struct sockaddr_in cli_addr;
+        socklen_t cli_size;
+        int cli_fd;
+
         for(;;) {
             cli_size = sizeof(cli_addr);
             cli_fd = accept(openufp_fd, (struct sockaddr *)&cli_addr, &cli_size);
@@ -162,6 +163,10 @@ int main(int argc, char**argv) {
 
             if ((child_pid = fork()) == 0) {
                 close(openufp_fd);
+                int nbytes = 0;
+                int denied = 0;
+                char mesg[REQ];
+                struct uf_request request;
 
                 for(;;) {
                     bzero(&mesg, sizeof(mesg));
