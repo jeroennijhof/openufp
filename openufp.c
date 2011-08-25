@@ -22,6 +22,7 @@ void usage() {
     printf("OPTIONS:\n");
     printf("   -l PORT   on which port openufp will listen for incoming requests\n");
     printf("   -r URL    when url is denied the client will be redirected to this url; n2h2 only\n");
+    printf("   -c SECS   cache expire time in seconds; default 3600\n");
     printf("   -d LEVEL  debug level 1-3\n\n");
     printf("FRONTEND:\n");
     printf("   -n        act as n2h2 server\n");
@@ -46,6 +47,7 @@ int main(int argc, char**argv) {
     struct sockaddr_in openufp_addr;
     int local_port = 0;
     char *redirect_url = NULL;
+    int cache_exp_secs = 3600;
     int debug = 1;
     int frontend = 0;
     char *proxy_ip = NULL;
@@ -55,7 +57,7 @@ int main(int argc, char**argv) {
     int squidguard = 0;
 
     int c;
-    while ((c = getopt(argc, argv, "l:r:d:nwp:f:g")) != -1) {
+    while ((c = getopt(argc, argv, "l:r:c:d:nwp:f:g")) != -1) {
         char *p;
         switch(c) {
             case 'l':
@@ -63,6 +65,9 @@ int main(int argc, char**argv) {
                 break;
             case 'r':
                 redirect_url = optarg;
+                break;
+            case 'c':
+                cache_exp_secs = atoi(optarg);
                 break;
             case 'd':
                 debug = atoi(optarg);
@@ -199,7 +204,7 @@ int main(int argc, char**argv) {
                             syslog(LOG_INFO, "received url request.");
 
                         // check if cached
-                        cached = in_cache(cachedb, request.url, 3600);
+                        cached = in_cache(cachedb, request.url, cache_exp_secs);
 
                         // parse url to blacklist
                         if (!cached && !denied && blacklist != NULL) {
