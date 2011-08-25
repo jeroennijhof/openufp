@@ -1,4 +1,5 @@
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -7,6 +8,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <time.h>
 
 #define VERSION "1.05"
 #define URL 65536
@@ -26,6 +28,9 @@ struct uf_request {
     int usrlen;
     char user[USER];
 };
+
+// cache
+#include "cache.h"
 
 // frontends
 #include "n2h2.h"

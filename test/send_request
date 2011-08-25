@@ -83,6 +83,7 @@ def main():
 
     if url != '':
         send_url(s, protocol, url)
+        send_url(s, protocol, url)
 
     s.close()
 

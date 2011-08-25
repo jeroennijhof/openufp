@@ -1,4 +1,5 @@
 * 2011/08/24 v1.05 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Added cache module
   Added squidguard backend support
   Added blacklist backend support
   

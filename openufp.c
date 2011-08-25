@@ -168,11 +168,14 @@ int main(int argc, char**argv) {
                 char mesg[REQ];
                 struct uf_request request;
 
+                DB *cachedb = open_cache();
+                int cached = 0;
                 for(;;) {
                     bzero(&mesg, sizeof(mesg));
                     nbytes = recvfrom(cli_fd, mesg, REQ, 0, (struct sockaddr *)&cli_addr, &cli_size);
                     if (nbytes < 6) {
                         syslog(LOG_WARNING, "wrong request, received %d byte(s) only, closing connection.", nbytes);
+                        close_cache(cachedb);
                         close(cli_fd);
                         exit(1);
                     }
@@ -195,18 +198,21 @@ int main(int argc, char**argv) {
                         if (debug > 1)
                             syslog(LOG_INFO, "received url request.");
 
+                        // check if cached
+                        cached = in_cache(cachedb, request.url, 3600);
+
                         // parse url to blacklist
-                        if (!denied && blacklist != NULL) {
+                        if (!cached && !denied && blacklist != NULL) {
                             denied = blacklist_backend(blacklist, request.url, debug);
                         }
 
                         // parse url to proxy
-                        if (!denied && proxy_ip != NULL) {
+                        if (!cached && !denied && proxy_ip != NULL) {
                             denied = proxy_backend(proxy_ip, proxy_port, proxy_deny_pattern, request.url, debug);
                         }
 
                         // parse url to proxy
-                        if (!denied && squidguard != 0) {
+                        if (!cached && !denied && squidguard != 0) {
                             denied = squidguard_backend(request.srcip, request.url, debug);
                         }
 
@@ -219,6 +225,8 @@ int main(int argc, char**argv) {
                             if (debug > 1)
                                 syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
                         } else {
+                            if (!cached)
+                                add_cache(cachedb, request.url);
                             if (frontend == N2H2) {
                                 n2h2_accept(cli_fd, cli_addr, request.id);
                             } else {
@@ -229,6 +237,7 @@ int main(int argc, char**argv) {
                         }
                     }
                 }
+                close_cache(cachedb);
             }
             close(cli_fd);
         }
