@@ -29,10 +29,10 @@ int blacklist_backend(char *blacklist, char url[URL], int debug) {
             syslog(LOG_WARNING, "blacklist: syntax error, line %d.", linenum);
             continue;
         }
-        if (debug > 2)
+        if (debug > 1)
             syslog(LOG_INFO, "blacklist: url (%s).", blacklist_url);
         if ((strstr(url, blacklist_url)) != NULL) {
-            if (debug > 1)
+            if (debug > 0)
                 syslog(LOG_INFO, "blacklist: url blocked.");
             fclose(fd);
             return 1;

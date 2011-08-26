@@ -1,4 +1,6 @@
 * 2011/08/24 v1.05 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Added commandline option to remove url from cache
+  Changed debug modes
   Added cache module
   Added squidguard backend support
   Added blacklist backend support

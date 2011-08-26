@@ -58,10 +58,10 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
  
     // check if the proxy is denying the page by the matched string
     proxy_res[nbytes] = '\0';
-    if (debug > 2)
+    if (debug > 1)
         syslog(LOG_INFO, "proxy: result (%s).", proxy_res);
     if((strstr(proxy_res, proxy_deny_pattern)) != NULL) {
-       if (debug > 1)
+       if (debug > 0)
            syslog(LOG_INFO, "proxy: url blocked.");
        return 1;
     }

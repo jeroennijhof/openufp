@@ -64,10 +64,10 @@ int squidguard_backend(char srcip[IP], char url[URL], int debug) {
         bzero(redirect_url, sizeof(redirect_url));
         fp = fdopen(infd[0], "r");
         while (fgets(redirect_url, sizeof(redirect_url)-1, fp) != NULL) {
-            if (debug > 2)
+            if (debug > 1)
                 syslog(LOG_INFO, "squidguard: redirect_url (%s).", redirect_url);
             if ((strstr(redirect_url, "http")) != NULL) {
-                if (debug > 1)
+                if (debug > 0)
                     syslog(LOG_INFO, "squidguard: url blocked.");
                 fclose(fp);
                 return 1;

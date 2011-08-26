@@ -18,11 +18,14 @@
 // Helper functions
 void usage() {
     printf("Usage: openufp [OPTIONS] <-n|-w> <BACKEND>\n");
-    printf("Example: openufp -n -p '192.168.1.10:3128:Access Denied.'\n\n");
+    printf("Example: openufp -n -p '192.168.1.10:3128:Access Denied.'\n");
+    printf("Example: openufp -n -f blacklist -p '192.168.1.10:3128:Access Denied.'\n");
+    printf("Example: openufp -C http://www.test.com\n\n");
     printf("OPTIONS:\n");
     printf("   -l PORT   on which port openufp will listen for incoming requests\n");
     printf("   -r URL    when url is denied the client will be redirected to this url; n2h2 only\n");
     printf("   -c SECS   cache expire time in seconds; default 3600\n");
+    printf("   -C URL    remove specified URL from cache\n");
     printf("   -d LEVEL  debug level 1-3\n\n");
     printf("FRONTEND:\n");
     printf("   -n        act as n2h2 server\n");
@@ -35,6 +38,10 @@ void usage() {
     printf("   -f FILE   use the blacklist file backend\n");
     printf("             FILE is a file which contains blacklisted urls\n");
     printf("   -g        use the squidGuard backend\n\n");
+    printf("NOTE:\n");
+    printf("   The default location of the cache db is /var/cache/openufp/cache.db.\n");
+    printf("   When squidguard backend is used be sure that this program has rw permissions\n");
+    printf("   to the squidguard db files.\n\n");
     printf("Version: %s\n", VERSION);
     printf("Report bugs to: jeroen@nijhofnet.nl\n");
 }
@@ -48,7 +55,7 @@ int main(int argc, char**argv) {
     int local_port = 0;
     char *redirect_url = NULL;
     int cache_exp_secs = 3600;
-    int debug = 1;
+    int debug = 0;
     int frontend = 0;
     char *proxy_ip = NULL;
     int proxy_port = 0;
@@ -57,8 +64,10 @@ int main(int argc, char**argv) {
     int squidguard = 0;
 
     int c;
-    while ((c = getopt(argc, argv, "l:r:c:d:nwp:f:g")) != -1) {
+    while ((c = getopt(argc, argv, "l:r:c:C:d:nwp:f:g")) != -1) {
         char *p;
+        DB *cachedb;
+        int ret = 0;
         switch(c) {
             case 'l':
                 local_port = atoi(optarg);
@@ -68,6 +77,13 @@ int main(int argc, char**argv) {
                 break;
             case 'c':
                 cache_exp_secs = atoi(optarg);
+                break;
+            case 'C':
+                cachedb = open_cache();
+                if (rm_cache(cachedb, optarg, 255) == -1)
+                    ret = 1;
+                close_cache(cachedb);
+                exit(ret);
                 break;
             case 'd':
                 debug = atoi(optarg);
@@ -163,7 +179,7 @@ int main(int argc, char**argv) {
         for(;;) {
             cli_size = sizeof(cli_addr);
             cli_fd = accept(openufp_fd, (struct sockaddr *)&cli_addr, &cli_size);
-            if (debug > 1)
+            if (debug > 0)
                 syslog(LOG_INFO, "client connection accepted.");
 
             if ((child_pid = fork()) == 0) {
@@ -200,11 +216,11 @@ int main(int argc, char**argv) {
 
                     // URL Request
                     if (request.type == N2H2REQ || request.type == WEBSNSREQ) {
-                        if (debug > 1)
+                        if (debug > 0)
                             syslog(LOG_INFO, "received url request.");
 
                         // check if cached
-                        cached = in_cache(cachedb, request.url, cache_exp_secs);
+                        cached = in_cache(cachedb, request.url, cache_exp_secs, debug);
 
                         // parse url to blacklist
                         if (!cached && !denied && blacklist != NULL) {
@@ -227,17 +243,17 @@ int main(int argc, char**argv) {
                             } else {
                                 websns_deny(cli_fd, cli_addr, request.id);
                             }
-                            if (debug > 1)
+                            if (debug > 0)
                                 syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
                         } else {
                             if (!cached)
-                                add_cache(cachedb, request.url);
+                                add_cache(cachedb, request.url, debug);
                             if (frontend == N2H2) {
                                 n2h2_accept(cli_fd, cli_addr, request.id);
                             } else {
                                 websns_accept(cli_fd, cli_addr, request.id);
                             }
-                            if (debug > 1)
+                            if (debug > 0)
                                 syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
                         }
                     }
