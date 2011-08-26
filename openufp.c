@@ -179,7 +179,7 @@ int main(int argc, char**argv) {
         for(;;) {
             cli_size = sizeof(cli_addr);
             cli_fd = accept(openufp_fd, (struct sockaddr *)&cli_addr, &cli_size);
-            if (debug > 0)
+            if (debug > -1)
                 syslog(LOG_INFO, "client connection accepted.");
 
             if ((child_pid = fork()) == 0) {
@@ -194,8 +194,8 @@ int main(int argc, char**argv) {
                 for(;;) {
                     bzero(&mesg, sizeof(mesg));
                     nbytes = recvfrom(cli_fd, mesg, REQ, 0, (struct sockaddr *)&cli_addr, &cli_size);
-                    if (nbytes < 6) {
-                        syslog(LOG_WARNING, "wrong request, received %d byte(s) only, closing connection.", nbytes);
+                    if (nbytes < 1) {
+                        syslog(LOG_WARNING, "connection closed by client.");
                         close_cache(cachedb);
                         close(cli_fd);
                         exit(1);

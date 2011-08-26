@@ -60,6 +60,7 @@ int in_cache(DB *dbp, char url[URL], int expire_sec, int debug) {
         }
         if (debug > 0)
             syslog(LOG_INFO, "cache: url in cache expired.");
+        rm_cache(dbp, url, debug);
     }
     if (debug > 0)
         syslog(LOG_INFO, "cache: url not in cache.");
