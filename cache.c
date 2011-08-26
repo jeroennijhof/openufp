@@ -41,7 +41,7 @@ int in_cache(DB *dbp, char url[URL], int expire_sec, int debug) {
 
     if (dbp == NULL) {
         syslog(LOG_WARNING, "cache: critical db problem, caching disabled.");
-        return 0;
+        return -1;
     }
 
     bzero(&key, sizeof(key));
@@ -75,7 +75,7 @@ int add_cache(DB *dbp, char url[URL], int debug) {
 
     if (dbp == NULL) {
         syslog(LOG_WARNING, "cache: critical db problem, caching disabled.");
-        return 0;
+        return -1;
     }
 
     bzero(&key, sizeof(key));
@@ -103,7 +103,7 @@ int rm_cache(DB *dbp, char url[URL], int debug) {
         if (debug == 255)
             printf("cache: critical db problem, caching disabled.\n");
         syslog(LOG_WARNING, "cache: critical db problem, caching disabled.");
-        return 0;
+        return -1;
     }
 
     bzero(&key, sizeof(key));
