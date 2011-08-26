@@ -227,7 +227,7 @@ int main(int argc, char**argv) {
 
                         // check if cached
                         cached = in_cache(cachedb, request.url, cache_exp_secs, debug);
-                        if (cached == -1)
+                        if (cached == -1) // Happens when there is a cache problem
                             cached = 0;
 
                         // parse url to blacklist
