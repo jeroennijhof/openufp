@@ -227,6 +227,8 @@ int main(int argc, char**argv) {
 
                         // check if cached
                         cached = in_cache(cachedb, request.url, cache_exp_secs, debug);
+                        if (cached == -1)
+                            cached = 0;
 
                         // parse url to blacklist
                         if (!cached && !denied && blacklist != NULL) {
@@ -262,6 +264,8 @@ int main(int argc, char**argv) {
                             if (debug > 0)
                                 syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
                         }
+                        // reset denied
+                        denied = 0;
                     }
                 }
                 if (squidguard)
