@@ -188,6 +188,10 @@ int main(int argc, char**argv) {
                 int denied = 0;
                 char mesg[REQ];
                 struct uf_request request;
+                FILE *sg_fd[2];
+
+                if (squidguard)
+                    squidguard_getfd(sg_fd);
 
                 DB *cachedb = open_cache();
                 int cached = 0;
@@ -196,6 +200,8 @@ int main(int argc, char**argv) {
                     nbytes = recvfrom(cli_fd, mesg, REQ, 0, (struct sockaddr *)&cli_addr, &cli_size);
                     if (nbytes < 1) {
                         syslog(LOG_WARNING, "connection closed by client.");
+                        if (squidguard)
+                            squidguard_closefd(sg_fd);
                         close_cache(cachedb);
                         close(cli_fd);
                         exit(1);
@@ -233,8 +239,8 @@ int main(int argc, char**argv) {
                         }
 
                         // parse url to proxy
-                        if (!cached && !denied && squidguard != 0) {
-                            denied = squidguard_backend(request.srcip, request.url, debug);
+                        if (!cached && !denied && squidguard) {
+                            denied = squidguard_backend(sg_fd, request.srcip, request.url, debug);
                         }
 
                         if (denied) {
@@ -258,6 +264,8 @@ int main(int argc, char**argv) {
                         }
                     }
                 }
+                if (squidguard)
+                    squidguard_closefd(sg_fd);
                 close_cache(cachedb);
             }
             close(cli_fd);

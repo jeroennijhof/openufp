@@ -8,7 +8,7 @@
 
 #include "openufp.h"
 
-int squidguard_backend(char srcip[IP], char url[URL], int debug) {
+int squidguard_getfd(FILE *sg_fd[2]) {
     int outfd[2];
     int infd[2];
 
@@ -16,11 +16,11 @@ int squidguard_backend(char srcip[IP], char url[URL], int debug) {
 
     if (pipe(outfd) == -1) {
         syslog(LOG_WARNING, "squidguard: pipe failed.");
-        return 0;
+        return -1;
     }
     if (pipe(infd) == -1) {
         syslog(LOG_WARNING, "squidguard: pipe failed.");
-        return 0;
+        return -1;
     }
 
     oldstdin = dup(0);
@@ -43,12 +43,9 @@ int squidguard_backend(char srcip[IP], char url[URL], int debug) {
 
         if (execv(argv[0], argv) == -1) {
             syslog(LOG_WARNING, "squidguard: failed executing /usr/bin/squidGuard.");
-            return 0;
+            return -1;
         }
     } else {
-        char redirect_url[URL];
-        FILE *fp;
-
         close(0);
         close(1);
         dup2(oldstdin, 0);
@@ -57,25 +54,35 @@ int squidguard_backend(char srcip[IP], char url[URL], int debug) {
         close(outfd[0]);
         close(infd[1]);
 
-        fp = fdopen(outfd[1], "w");
-        fprintf(fp, "%s%s%s%s", url, " ", srcip, "/ - - GET");
-        fclose(fp);
-
-        bzero(redirect_url, sizeof(redirect_url));
-        fp = fdopen(infd[0], "r");
-        while (fgets(redirect_url, sizeof(redirect_url)-1, fp) != NULL) {
-            if (debug > 1)
-                syslog(LOG_INFO, "squidguard: redirect_url (%s).", redirect_url);
-            if ((strstr(redirect_url, "http")) != NULL) {
-                if (debug > 0)
-                    syslog(LOG_INFO, "squidguard: url blocked.");
-                fclose(fp);
-                return 1;
-            }
-        }
-        fclose(fp);
+        sg_fd[0] = fdopen(infd[0], "r");
+        sg_fd[1] = fdopen(outfd[1], "w");
+        return 0;
     }
+    return 0;
+}
 
+int squidguard_closefd(FILE *sg_fd[2]) {
+    fclose(sg_fd[0]);
+    fclose(sg_fd[1]);
+    return 0;
+}
+
+int squidguard_backend(FILE *sg_fd[2], char srcip[IP], char url[URL], int debug) {
+    char redirect_url[URL];
+    bzero(redirect_url, sizeof(redirect_url));
+
+    fprintf(sg_fd[1], "%s%s%s%s", url, " ", srcip, "/ - - GET\n");
+    fflush(sg_fd[1]);
+    while (fgets(redirect_url, sizeof(redirect_url)-1, sg_fd[0]) != NULL) {
+        if (debug > 1)
+            syslog(LOG_INFO, "squidguard: redirect_url (%s).", redirect_url);
+        if ((strstr(redirect_url, "http")) != NULL) {
+            if (debug > 0)
+                syslog(LOG_INFO, "squidguard: url blocked.");
+            return 1;
+        }
+        return 0;
+    }
     return 0;
 }
 

@@ -2,6 +2,7 @@
 import sys
 import getopt
 import socket
+import time
 
 def usage():
     print 'Usage: send_request [-h|--help] -p|--protocol <n2h2|websense> [-a|--alive] [-u|--url <url>]'
@@ -83,6 +84,7 @@ def main():
 
     if url != '':
         send_url(s, protocol, url)
+        time.sleep(1)
         send_url(s, protocol, url)
 
     s.close()
