@@ -10,7 +10,7 @@
 #include <syslog.h>
 #include <time.h>
 
-#define VERSION "1.05"
+#define VERSION "1.06"
 #define URL 65536
 #define USER 512
 #define REQ 26+URL+USER

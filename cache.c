@@ -19,15 +19,16 @@ DB *open_cache() {
     }
     if ((ret = dbp->open(dbp, NULL, DATABASE, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
         syslog(LOG_WARNING, "cache: %s.", db_strerror(ret));
-        close_cache(dbp);
+        close_cache(dbp, 0);
         return NULL;
     } 
     return dbp;
 }
 
-int close_cache(DB *dbp) {
+int close_cache(DB *dbp, int debug) {
     if (dbp == NULL) {
-        syslog(LOG_WARNING, "cache: critical db problem, caching disabled.");
+        if (debug > 1)
+            syslog(LOG_INFO, "cache: close_cache: caching disabled.");
         return -1;
     }
     return dbp->close(dbp, 0);
@@ -40,7 +41,8 @@ int in_cache(DB *dbp, char url[URL], int expire_sec, int debug) {
     sprintf(sec, "%ld", time(NULL) - expire_sec);
 
     if (dbp == NULL) {
-        syslog(LOG_WARNING, "cache: critical db problem, caching disabled.");
+        if (debug > 1)
+            syslog(LOG_INFO, "cache: in_cache: caching disabled.");
         return -1;
     }
 
@@ -74,7 +76,8 @@ int add_cache(DB *dbp, char url[URL], int debug) {
     sprintf(sec, "%ld", time(NULL));
 
     if (dbp == NULL) {
-        syslog(LOG_WARNING, "cache: critical db problem, caching disabled.");
+        if (debug > 1)
+            syslog(LOG_INFO, "cache: add_cache: caching disabled.");
         return -1;
     }
 
@@ -102,7 +105,8 @@ int rm_cache(DB *dbp, char url[URL], int debug) {
     if (dbp == NULL) {
         if (debug == 255)
             printf("cache: critical db problem, caching disabled.\n");
-        syslog(LOG_WARNING, "cache: critical db problem, caching disabled.");
+        if (debug > 1)
+            syslog(LOG_INFO, "cache: rm_cache: caching disabled.");
         return -1;
     }
 

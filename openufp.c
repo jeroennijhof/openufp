@@ -24,7 +24,7 @@ void usage() {
     printf("OPTIONS:\n");
     printf("   -l PORT   on which port openufp will listen for incoming requests\n");
     printf("   -r URL    when url is denied the client will be redirected to this url; n2h2 only\n");
-    printf("   -c SECS   cache expire time in seconds; default 3600\n");
+    printf("   -c SECS   cache expire time in seconds; default 3600; 0 disables caching\n");
     printf("   -C URL    remove specified URL from cache\n");
     printf("   -d LEVEL  debug level 1-3\n\n");
     printf("FRONTEND:\n");
@@ -82,7 +82,7 @@ int main(int argc, char**argv) {
                 cachedb = open_cache();
                 if (rm_cache(cachedb, optarg, 255) == -1)
                     ret = 1;
-                close_cache(cachedb);
+                close_cache(cachedb, 0);
                 exit(ret);
                 break;
             case 'd':
@@ -179,8 +179,7 @@ int main(int argc, char**argv) {
         for(;;) {
             cli_size = sizeof(cli_addr);
             cli_fd = accept(openufp_fd, (struct sockaddr *)&cli_addr, &cli_size);
-            if (debug > -1)
-                syslog(LOG_INFO, "client connection accepted.");
+            syslog(LOG_INFO, "client connection accepted.");
 
             if ((child_pid = fork()) == 0) {
                 close(openufp_fd);
@@ -193,7 +192,12 @@ int main(int argc, char**argv) {
                 if (squidguard)
                     squidguard_getfd(sg_fd);
 
-                DB *cachedb = open_cache();
+                DB *cachedb = NULL;
+                if (cache_exp_secs > 0)
+                    cachedb = open_cache();
+                else
+                    syslog(LOG_INFO, "caching disabled.");
+
                 int cached = 0;
                 for(;;) {
                     bzero(&mesg, sizeof(mesg));
@@ -202,7 +206,7 @@ int main(int argc, char**argv) {
                         syslog(LOG_WARNING, "connection closed by client.");
                         if (squidguard)
                             squidguard_closefd(sg_fd);
-                        close_cache(cachedb);
+                        close_cache(cachedb, debug);
                         close(cli_fd);
                         exit(1);
                     }
@@ -254,13 +258,13 @@ int main(int argc, char**argv) {
                             if (debug > 0)
                                 syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
                         } else {
-                            if (!cached)
-                                add_cache(cachedb, request.url, debug);
                             if (frontend == N2H2) {
                                 n2h2_accept(cli_fd, cli_addr, request.id);
                             } else {
                                 websns_accept(cli_fd, cli_addr, request.id);
                             }
+                            if (!cached)
+                                add_cache(cachedb, request.url, debug);
                             if (debug > 0)
                                 syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
                         }
@@ -270,7 +274,7 @@ int main(int argc, char**argv) {
                 }
                 if (squidguard)
                     squidguard_closefd(sg_fd);
-                close_cache(cachedb);
+                close_cache(cachedb, debug);
             }
             close(cli_fd);
         }
