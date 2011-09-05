@@ -79,6 +79,7 @@ struct uf_request n2h2_request(char mesg[REQ]) {
     // Get type of request
     if ((mesg[0] == 2) && (mesg[1] == 3)) {
         request.type = N2H2ALIVE;
+        return request;
     }
     if ((mesg[0] == 2) && (mesg[1] == 0)) {
         request.type = N2H2REQ;

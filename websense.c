@@ -8,7 +8,21 @@
 
 #include "openufp.h"
 
+void websns_alive(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
+    char mesg_alive[12];
+    int i;
+
+    mesg_alive[0] = 0;
+    mesg_alive[1] = 12;
+    for(i = 0; i < 10; i++)
+        mesg_alive[2+i] = req_id[i];
+ 
+    // send alive response
+    sendto(fd, mesg_alive, 12, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+}
+
 void websns_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
+    // reqsize(2),reqid(10),code(2),desc(2),category(2),cache?(4),cachecmd(2),cachetype(2),null(8)
     char mesg_accept[WEBSNSRES];
     int i;
 
@@ -52,7 +66,7 @@ void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
 }
 
 struct uf_request websns_request(char mesg[REQ]) {
-    // URL Request reqlen(2),reqid(10),code(2),descr(2),srcip(4),dstip(4),urllen(2),url(urllen)
+    // reqsize(2),reqid(10),code(2),descr(2),srcip(4),dstip(4),urllen(2),url(urllen)
     struct uf_request request = {"", 0, "", "", 0, "", 0, ""};
     int ips[8];
     int i;
@@ -62,6 +76,10 @@ struct uf_request websns_request(char mesg[REQ]) {
         request.id[i] = mesg[2+i];
 
     // Get type of request
+    if ((mesg[0] == 0) && (mesg[1] == 12)) {
+        request.type = WEBSNSALIVE;
+        return request;
+    }
     if ((mesg[12] == 0) && (mesg[13] == 1)) {
         request.type = WEBSNSREQ;
     }

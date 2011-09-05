@@ -220,8 +220,13 @@ int main(int argc, char**argv) {
                     // Alive Request
                     if (request.type == N2H2ALIVE) {
                         if (debug > 2)
-                            syslog(LOG_INFO, "received alive request, sending alive response.");
+                            syslog(LOG_INFO, "n2h2: received alive request, sending alive response.");
                         n2h2_alive(cli_fd, cli_addr, request.id);
+                    }
+                    if (request.type == WEBSNSALIVE) {
+                        if (debug > 2)
+                            syslog(LOG_INFO, "websns: received alive request, sending alive response.");
+                        websns_alive(cli_fd, cli_addr, request.id);
                     }
 
                     // URL Request
