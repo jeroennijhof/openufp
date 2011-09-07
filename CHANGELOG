@@ -1,7 +1,8 @@
-* 2011/09/02 v1.06 Jeroen Nijhof <jeroen@nijhofnet.nl>
-  Add websense keepalive
-  Add option to disable caching
-  Only call caching function when cachedb is not null
+* 2011/09/07 v1.06 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Added websense version 1 and 4 support
+  Websense keepalive needs to be answered by accept
+  Added websense keepalive
+  Added option to disable caching
 
 * 2011/08/24 v1.05 Jeroen Nijhof <jeroen@nijhofnet.nl>
   Fixed denied reset issue

@@ -8,19 +8,6 @@
 
 #include "openufp.h"
 
-void websns_alive(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
-    char mesg_alive[12];
-    int i;
-
-    mesg_alive[0] = 0;
-    mesg_alive[1] = 12;
-    for(i = 0; i < 10; i++)
-        mesg_alive[2+i] = req_id[i];
- 
-    // send alive response
-    sendto(fd, mesg_alive, 12, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
-}
-
 void websns_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
     // reqsize(2),reqid(10),code(2),desc(2),category(2),cache?(4),cachecmd(2),cachetype(2),null(8)
     char mesg_accept[WEBSNSRES];
@@ -66,10 +53,14 @@ void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
 }
 
 struct uf_request websns_request(char mesg[REQ]) {
-    // reqsize(2),reqid(10),code(2),descr(2),srcip(4),dstip(4),urllen(2),url(urllen)
+    /* version 1:
+       reqsize(2),reqid(10),code(2),descr(2),srcip(4),dstip(4),usrsize(2),urlsize(2),url(urlsize)
+       version 4:
+       reqsize(2),reqid(10),code(2),descr(2),srcip(4),dstip(4),urlsize(2),url(urlsize) */
     struct uf_request request = {"", 0, "", "", 0, "", 0, ""};
     int ips[8];
-    int i;
+    int i = 0;
+    int offset = 0;
 
     // Get request id
     for(i = 0; i < 10; i++)
@@ -95,8 +86,12 @@ struct uf_request websns_request(char mesg[REQ]) {
     sprintf(request.srcip,"%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
     sprintf(request.dstip,"%d.%d.%d.%d", ips[4], ips[5], ips[6], ips[7]);
 
+    // check version
+    if (mesg[24] == 0 && mesg[25] == 0)
+        offset = 2;
+
     // fetch url length
-    request.urllen = (mesg[24]*256) + mesg[25];
+    request.urllen = (mesg[24+offset]*256) + mesg[25+offset];
     if (request.urllen < 0)
         request.urllen += 256;
     if (request.urllen > URL)
@@ -104,7 +99,7 @@ struct uf_request websns_request(char mesg[REQ]) {
 
     // fetch url
     for(i = 0; i < request.urllen; i++)
-        request.url[i] = mesg[26+i];
+        request.url[i] = mesg[26+offset+i];
 
     return request;
 }
