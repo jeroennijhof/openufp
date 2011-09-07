@@ -258,7 +258,7 @@ int main(int argc, char**argv) {
                             if (frontend == N2H2) {
                                 n2h2_deny(cli_fd, cli_addr, request.id, redirect_url);
                             } else {
-                                websns_deny(cli_fd, cli_addr, request.id);
+                                websns_deny(cli_fd, cli_addr, request.id, redirect_url);
                             }
                             if (debug > 0)
                                 syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);

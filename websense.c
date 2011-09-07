@@ -11,7 +11,7 @@
 void websns_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
     // reqsize(2),reqid(10),code(2),desc(2),category(2),cache?(4),cachecmd(2),cachetype(2),null(8)
     char mesg_accept[WEBSNSRES];
-    int i;
+    int i = 0;
 
     mesg_accept[0] = 0;
     mesg_accept[1] = WEBSNSRES;
@@ -30,10 +30,11 @@ void websns_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
     sendto(fd, mesg_accept, WEBSNSRES, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
 }
 
-void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
+void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *redirect_url) {
     // reqsize(2),reqid(10),code(2),desc(2),category(2),cache?(4),cachecmd(2),cachetype(2),null(8)
-    char mesg_denied[WEBSNSRES];
-    int i;
+    char mesg_denied[WEBSNSRES+URL];
+    int redirect_url_len = 0;
+    int i = 0;
 
     mesg_denied[0] = 0;
     mesg_denied[1] = WEBSNSRES;
@@ -47,6 +48,21 @@ void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
     mesg_denied[17] = 153; // cat
     for(i = 0; i < 16; i++)
         mesg_denied[18+i] = 0;
+
+    // send custom redirect url if defined
+    // not working yet so disabled
+    redirect_url = NULL;
+    if (redirect_url != NULL) {
+        redirect_url_len = strlen(redirect_url) + 1;
+        if (redirect_url_len <= URL) {
+            mesg_denied[30] = redirect_url_len / 768;
+            mesg_denied[31] = (redirect_url_len % 768) / 512;
+            mesg_denied[32] = ((redirect_url_len % 768) % 512) / 256;
+            mesg_denied[33] = ((redirect_url_len % 768) % 512) % 256;
+            for(i = 0; i < redirect_url_len; i++)
+                mesg_denied[N2H2RES+i] = redirect_url[i];
+        }
+    }
 
     // send denied response
     sendto(fd, mesg_denied, WEBSNSRES, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));

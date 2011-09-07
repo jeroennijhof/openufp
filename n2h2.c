@@ -47,13 +47,13 @@ void n2h2_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *re
     mesg_denied[1] = 2;
     for(i = 0; i < 4; i++)
         mesg_denied[2+i] = req_id[i];
+    for(i = 0; i < 4; i++)
+        mesg_denied[6+i] = 0;
+
+    // send custom redirect url if defined
     if (redirect_url != NULL) {
         redirect_url_len = strlen(redirect_url) + 1;
-        if (redirect_url_len > URL) {
-            redirect_url_len = 0;
-            for(i = 0; i < 4; i++)
-                mesg_denied[6+i] = 0;
-        } else {
+        if (redirect_url_len <= URL) {
             mesg_denied[6] = redirect_url_len / 768;
             mesg_denied[7] = (redirect_url_len % 768) / 512;
             mesg_denied[8] = ((redirect_url_len % 768) % 512) / 256;
@@ -61,9 +61,6 @@ void n2h2_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *re
             for(i = 0; i < redirect_url_len; i++)
                 mesg_denied[N2H2RES+i] = redirect_url[i];
         }
-    } else {
-        for(i = 0; i < 4; i++)
-            mesg_denied[6+i] = 0;
     }
 
     // send denied response

@@ -12,6 +12,6 @@
 #define WEBSNSRES 34
 
 extern void websns_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]);
-extern void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID]);
+extern void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *redirect_url);
 extern struct uf_request websns_request(char mesg[REQ]);
 
