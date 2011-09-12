@@ -8,64 +8,68 @@
 
 #include "openufp.h"
 
-void websns_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
-    // reqsize(2),reqid(10),code(2),desc(2),category(2),cache?(4),cachecmd(2),cachetype(2),null(8)
-    char mesg_accept[WEBSNSRES];
+void websns_alive(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
+    char mesg_accept[WEBSNSHDR];
     int i = 0;
 
     mesg_accept[0] = 0;
-    mesg_accept[1] = WEBSNSRES;
+    mesg_accept[1] = WEBSNSHDR;
     for(i = 0; i < 10; i++)
         mesg_accept[2+i] = req_id[i];
-    mesg_accept[12] = 0;
-    mesg_accept[13] = 0;
-    mesg_accept[14] = 4;
-    mesg_accept[15] = 10;
-    mesg_accept[16] = 0;
-    mesg_accept[17] = 153;
-    for(i = 0; i < 16; i++)
-        mesg_accept[18+i] = 0;
+    for(i = 0; i < 8; i++)
+        mesg_accept[12+i] = 0;
+    mesg_accept[14] = 255;
+    mesg_accept[15] = 255;
 
     // send accept response
-    sendto(fd, mesg_accept, WEBSNSRES, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+    sendto(fd, mesg_accept, WEBSNSHDR, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+}
+
+void websns_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
+    char mesg_accept[WEBSNSHDR];
+    int i = 0;
+
+    mesg_accept[0] = 0;
+    mesg_accept[1] = WEBSNSHDR;
+    for(i = 0; i < 10; i++)
+        mesg_accept[2+i] = req_id[i];
+    for(i = 0; i < 8; i++)
+        mesg_accept[12+i] = 0;
+
+    // send accept response
+    sendto(fd, mesg_accept, WEBSNSHDR, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
 }
 
 void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *redirect_url) {
-    // reqsize(2),reqid(10),code(2),desc(2),category(2),cache?(4),cachecmd(2),cachetype(2),null(8)
-    char mesg_denied[WEBSNSRES+URL];
+    char mesg_denied[WEBSNSHDR+URL];
     int redirect_url_len = 0;
     int i = 0;
 
     mesg_denied[0] = 0;
-    mesg_denied[1] = WEBSNSRES;
+    mesg_denied[1] = WEBSNSHDR;
     for(i = 0; i < 10; i++)
         mesg_denied[2+i] = req_id[i];
     mesg_denied[12] = 0; // code
     mesg_denied[13] = 1; // code
-    mesg_denied[14] = 4;  // desc
-    mesg_denied[15] = 10; // desc
+    mesg_denied[14] = 0;  // desc
+    mesg_denied[15] = 1; // desc
     mesg_denied[16] = 0;   // cat
-    mesg_denied[17] = 153; // cat
-    for(i = 0; i < 16; i++)
-        mesg_denied[18+i] = 0;
+    mesg_denied[17] = 0; // cat
+    mesg_denied[18] = 0; // url_size
+    mesg_denied[19] = 0; // url_size
 
-    // send custom redirect url if defined
-    // not working yet so disabled
-    redirect_url = NULL;
     if (redirect_url != NULL) {
         redirect_url_len = strlen(redirect_url) + 1;
         if (redirect_url_len <= URL) {
-            mesg_denied[30] = redirect_url_len / 768;
-            mesg_denied[31] = (redirect_url_len % 768) / 512;
-            mesg_denied[32] = ((redirect_url_len % 768) % 512) / 256;
-            mesg_denied[33] = ((redirect_url_len % 768) % 512) % 256;
+            mesg_denied[1] += redirect_url_len;
+            mesg_denied[19] = redirect_url_len;
             for(i = 0; i < redirect_url_len; i++)
-                mesg_denied[N2H2RES+i] = redirect_url[i];
+                mesg_denied[WEBSNSHDR+i] = redirect_url[i];
         }
     }
 
     // send denied response
-    sendto(fd, mesg_denied, WEBSNSRES, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+    sendto(fd, mesg_denied, WEBSNSHDR + redirect_url_len, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
 }
 
 struct uf_request websns_request(char mesg[REQ]) {

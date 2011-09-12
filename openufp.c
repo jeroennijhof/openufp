@@ -226,7 +226,7 @@ int main(int argc, char**argv) {
                     if (request.type == WEBSNSALIVE) {
                         if (debug > 2)
                             syslog(LOG_INFO, "websns: received alive request, sending accept response.");
-                        websns_accept(cli_fd, cli_addr, request.id);
+                        websns_alive(cli_fd, cli_addr, request.id);
                     }
 
                     // URL Request
