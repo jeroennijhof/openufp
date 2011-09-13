@@ -9,54 +9,51 @@
 #include "openufp.h"
 
 void n2h2_alive(int fd, struct n2h2_req *n2h2_request) {
-    struct n2h2_resp *n2h2_resp_alive = NULL;
+    struct n2h2_resp n2h2_resp_alive;
 
-    n2h2_resp_alive->code = htons(770);
-    n2h2_resp_alive->serial = n2h2_request->serial;
-    n2h2_resp_alive->unknown = htons(0);
-    n2h2_resp_alive->urlsize = htons(0);
+    n2h2_resp_alive.code = htons(770);
+    n2h2_resp_alive.serial = n2h2_request->serial;
+    n2h2_resp_alive.unknown = htons(0);
+    n2h2_resp_alive.urlsize = htons(0);
  
     // send alive response
-    send(fd, n2h2_resp_alive, N2H2_HDR, 0);
-    free(n2h2_resp_alive);
+    send(fd, &n2h2_resp_alive, N2H2_HDR, 0);
 }
 
 void n2h2_accept(int fd, struct n2h2_req *n2h2_request) {
-    struct n2h2_resp *n2h2_resp_accept = NULL;
+    struct n2h2_resp n2h2_resp_accept;
 
-    n2h2_resp_accept->code = htons(2);
-    n2h2_resp_accept->serial = n2h2_request->serial;
-    n2h2_resp_accept->unknown = htons(0);
-    n2h2_resp_accept->urlsize = htons(0);
+    n2h2_resp_accept.code = htons(2);
+    n2h2_resp_accept.serial = n2h2_request->serial;
+    n2h2_resp_accept.unknown = htons(0);
+    n2h2_resp_accept.urlsize = htons(0);
  
     // send accept response
-    send(fd, n2h2_resp_accept, N2H2_HDR, 0);
-    free(n2h2_resp_accept);
+    send(fd, &n2h2_resp_accept, N2H2_HDR, 0);
 }
 
 void n2h2_deny(int fd, struct n2h2_req *n2h2_request, char *redirect_url) {
-    struct n2h2_resp *n2h2_resp_deny = NULL;
+    struct n2h2_resp n2h2_resp_deny;
     int urlsize = 0;
     int i;
 
-    n2h2_resp_deny->code = htons(258);
-    n2h2_resp_deny->serial = n2h2_request->serial;
-    n2h2_resp_deny->unknown = htons(0);
-    n2h2_resp_deny->urlsize = htons(0);
+    n2h2_resp_deny.code = htons(258);
+    n2h2_resp_deny.serial = n2h2_request->serial;
+    n2h2_resp_deny.unknown = htons(0);
+    n2h2_resp_deny.urlsize = htons(0);
 
     // send custom redirect url if defined
     if (redirect_url != NULL) {
         urlsize = strlen(redirect_url) + 1;
         if (urlsize < URL_SIZE) {
-            n2h2_resp_deny->urlsize = htons(urlsize);
+            n2h2_resp_deny.urlsize = htons(urlsize);
             for(i = 0; i < urlsize; i++)
-                n2h2_resp_deny->url[i] = redirect_url[i];
+                n2h2_resp_deny.url[i] = redirect_url[i];
         }
     }
 
     // send denied response
-    send(fd, n2h2_resp_deny, N2H2_HDR + urlsize, 0);
-    free(n2h2_resp_deny);
+    send(fd, &n2h2_resp_deny, N2H2_HDR + urlsize, 0);
 }
 
 struct uf_request n2h2_validate(struct n2h2_req *n2h2_request, int msgsize) {
