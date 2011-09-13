@@ -8,13 +8,13 @@
 
 #include "openufp.h"
 
-int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char url[URL], int debug) {
+int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char url[URL_SIZE], int debug) {
     int proxy_fd = -1;
     int proxy_req_len = 0;
     int nbytes = 0;
     struct sockaddr_in proxy_addr;
     char proxy_res[PRXYRES];
-    char proxy_req[URL+17];
+    char proxy_req[URL_SIZE+17];
 
     // return accept if socket failes
     if ((proxy_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {

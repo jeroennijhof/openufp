@@ -10,7 +10,7 @@
 
 extern DB *open_cache();
 extern int close_cache(DB *dbp, int debug);
-extern int in_cache(DB *dbp, char url[URL], int expire_sec, int debug);
-extern int add_cache(DB *dbp, char url[URL], int debug);
-extern int rm_cache(DB *dbp, char url[URL], int debug);
+extern int in_cache(DB *dbp, char url[URL_SIZE], int expire_sec, int debug);
+extern int add_cache(DB *dbp, char url[URL_SIZE], int debug);
+extern int rm_cache(DB *dbp, char url[URL_SIZE], int debug);
 

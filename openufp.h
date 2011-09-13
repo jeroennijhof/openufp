@@ -11,22 +11,16 @@
 #include <time.h>
 
 #define VERSION "1.06"
-#define URL 65536
-#define USER 512
-#define REQ 26+URL+USER
-#define REQID 10
-#define IP 16
+#define URL_SIZE 65535
+#define REQ_SIZE 65535
 
-// request struct
+// request struct and defs
+#define UNKNOWN 65535
 struct uf_request {
-    char id[REQID];
-    int type;
-    char srcip[IP];
-    char dstip[IP];
-    int urllen;
-    char url[URL];
-    int usrlen;
-    char user[USER];
+    u_int16_t type;
+    struct in_addr srcip;
+    struct in_addr dstip;
+    char url[URL_SIZE];
 };
 
 // cache

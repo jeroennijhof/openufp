@@ -183,9 +183,9 @@ int main(int argc, char**argv) {
 
             if ((child_pid = fork()) == 0) {
                 close(openufp_fd);
-                int nbytes = 0;
+                int msgsize = 0;
                 int denied = 0;
-                char mesg[REQ];
+                char msg[REQ_SIZE];
                 struct uf_request request;
                 FILE *sg_fd[2];
 
@@ -199,10 +199,12 @@ int main(int argc, char**argv) {
                     syslog(LOG_INFO, "caching disabled.");
 
                 int cached = 0;
+                struct websns_req *websns_request = NULL;
+                struct n2h2_req *n2h2_request = NULL;
                 for(;;) {
-                    bzero(&mesg, sizeof(mesg));
-                    nbytes = recvfrom(cli_fd, mesg, REQ, 0, (struct sockaddr *)&cli_addr, &cli_size);
-                    if (nbytes < 1) {
+                    bzero(&msg, sizeof(msg));
+                    msgsize = recvfrom(cli_fd, msg, REQ_SIZE, 0, (struct sockaddr *)&cli_addr, &cli_size);
+                    if (msgsize < 1) {
                         syslog(LOG_WARNING, "connection closed by client.");
                         if (squidguard)
                             squidguard_closefd(sg_fd);
@@ -211,26 +213,37 @@ int main(int argc, char**argv) {
                         exit(1);
                     }
 
+                    // Validate request
                     if (frontend == N2H2) {
-                        request = n2h2_request(mesg);
+                        n2h2_request = (struct n2h2_req *)msg;
+                        request = n2h2_validate(n2h2_request, msgsize);
                     } else {
-                        request = websns_request(mesg);
+                        websns_request = (struct websns_req *)msg;
+                        request = websns_validate(websns_request, msgsize);
+                    }
+                    if (request.type == UNKNOWN) {
+                        syslog(LOG_WARNING, "request type not known, closing connecion.");
+                        if (squidguard)
+                            squidguard_closefd(sg_fd);
+                        close_cache(cachedb, debug);
+                        close(cli_fd);
+                        exit(1);
                     }
 
-                    // Alive Request
-                    if (request.type == N2H2ALIVE) {
+                    // Alive request
+                    if (request.type == N2H2_ALIVE) {
                         if (debug > 2)
                             syslog(LOG_INFO, "n2h2: received alive request, sending alive response.");
-                        n2h2_alive(cli_fd, cli_addr, request.id);
+                        n2h2_alive(cli_fd, n2h2_request);
                     }
-                    if (request.type == WEBSNSALIVE) {
+                    if (request.type == WEBSNS_ALIVE) {
                         if (debug > 2)
-                            syslog(LOG_INFO, "websns: received alive request, sending accept response.");
-                        websns_alive(cli_fd, cli_addr, request.id);
+                            syslog(LOG_INFO, "websns: received alive request, sending alive response.");
+                        websns_alive(cli_fd, websns_request);
                     }
 
-                    // URL Request
-                    if (request.type == N2H2REQ || request.type == WEBSNSREQ) {
+                    // URL request
+                    if (request.type == N2H2_REQ || request.type == WEBSNS_REQ) {
                         if (debug > 0)
                             syslog(LOG_INFO, "received url request.");
 
@@ -256,22 +269,24 @@ int main(int argc, char**argv) {
 
                         if (denied) {
                             if (frontend == N2H2) {
-                                n2h2_deny(cli_fd, cli_addr, request.id, redirect_url);
+                                n2h2_deny(cli_fd, n2h2_request, redirect_url);
                             } else {
-                                websns_deny(cli_fd, cli_addr, request.id, redirect_url);
+                                websns_deny(cli_fd, websns_request, redirect_url);
                             }
                             if (debug > 0)
-                                syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
+                                syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s.",
+                                                 inet_ntoa(request.srcip), inet_ntoa(request.dstip), request.url);
                         } else {
                             if (frontend == N2H2) {
-                                n2h2_accept(cli_fd, cli_addr, request.id);
+                                n2h2_accept(cli_fd, n2h2_request);
                             } else {
-                                websns_accept(cli_fd, cli_addr, request.id);
+                                websns_accept(cli_fd, websns_request);
                             }
                             if (!cached)
                                 add_cache(cachedb, request.url, debug);
                             if (debug > 0)
-                                syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s.", request.srcip, request.dstip, request.url);
+                                syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s.",
+                                                 inet_ntoa(request.srcip), inet_ntoa(request.dstip), request.url);
                         }
                         // reset denied
                         denied = 0;

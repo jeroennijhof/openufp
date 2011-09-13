@@ -7,12 +7,55 @@
  */
 
 #define WEBSNS 2
-#define WEBSNSREQ 4
-#define WEBSNSALIVE 6
-#define WEBSNSHDR 20
+#define WEBSNS_HDR 20
+#define WEBSNS_ALIVE 12
+#define WEBSNS_REQ 1
+#define WEBSNS_REQ_SIZE 26
 
-extern void websns_alive(int fd, struct sockaddr_in cli_addr, char req_id[REQID]);
-extern void websns_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]);
-extern void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *redirect_url);
-extern struct uf_request websns_request(char mesg[REQ]);
+struct websns_req {
+    u_int16_t size;
+    u_int16_t vers_maj;
+    u_int16_t vers_min;
+    u_int16_t vers_pat;
+    u_int32_t serial;
+    u_int16_t code;
+    u_int16_t desc;
+    struct in_addr srcip;
+    struct in_addr dstip;
+    u_int16_t urlsize;
+    char url[URL_SIZE];
+};
+
+struct websns_req_v1 {
+    u_int16_t size;
+    u_int16_t vers_maj;
+    u_int16_t vers_min;
+    u_int16_t vers_pat;
+    u_int32_t serial;
+    u_int16_t code;
+    u_int16_t desc;
+    struct in_addr srcip;
+    struct in_addr dstip;
+    u_int16_t usrsize;
+    u_int16_t urlsize;
+    char url[URL_SIZE];
+};
+
+struct websns_resp {
+    u_int16_t size;
+    u_int16_t vers_maj;
+    u_int16_t vers_min;
+    u_int16_t vers_pat;
+    u_int32_t serial;
+    u_int16_t code;
+    u_int16_t desc;
+    u_int16_t cat;
+    u_int16_t urlsize;
+    char url[URL_SIZE];
+};
+
+extern void websns_alive(int fd, struct websns_req *websns_request);
+extern void websns_accept(int fd, struct websns_req *websns_request);
+extern void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url);
+extern struct uf_request websns_validate(struct websns_req *websns_request, int msgsize);
 

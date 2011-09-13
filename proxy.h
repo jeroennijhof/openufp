@@ -8,5 +8,5 @@
 
 #define PRXYRES 1024
 
-extern int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char url[URL], int debug);
+extern int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char url[URL_SIZE], int debug);
 

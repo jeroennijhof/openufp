@@ -8,118 +8,91 @@
 
 #include "openufp.h"
 
-void websns_alive(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
-    char mesg_accept[WEBSNSHDR];
-    int i = 0;
+void websns_alive(int fd, struct websns_req *websns_request) {
+    struct websns_resp *websns_resp_alive = NULL;
 
-    mesg_accept[0] = 0;
-    mesg_accept[1] = WEBSNSHDR;
-    for(i = 0; i < 10; i++)
-        mesg_accept[2+i] = req_id[i];
-    for(i = 0; i < 8; i++)
-        mesg_accept[12+i] = 0;
-    mesg_accept[14] = 255;
-    mesg_accept[15] = 255;
-
-    // send accept response
-    sendto(fd, mesg_accept, WEBSNSHDR, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
-}
-
-void websns_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
-    char mesg_accept[WEBSNSHDR];
-    int i = 0;
-
-    mesg_accept[0] = 0;
-    mesg_accept[1] = WEBSNSHDR;
-    for(i = 0; i < 10; i++)
-        mesg_accept[2+i] = req_id[i];
-    for(i = 0; i < 8; i++)
-        mesg_accept[12+i] = 0;
+    websns_resp_alive->size = htons(WEBSNS_HDR);
+    websns_resp_alive->vers_maj = websns_request->vers_maj;
+    websns_resp_alive->vers_min = websns_request->vers_min;
+    websns_resp_alive->vers_pat = websns_request->vers_pat;
+    websns_resp_alive->serial = websns_request->serial;
+    websns_resp_alive->code = htons(0);
+    websns_resp_alive->desc = htons(65535);
+    websns_resp_alive->cat = htons(0);
+    websns_resp_alive->urlsize = htons(0);
 
     // send accept response
-    sendto(fd, mesg_accept, WEBSNSHDR, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+    send(fd, websns_resp_alive, WEBSNS_HDR, 0);
+    free(websns_resp_alive);
 }
 
-void websns_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *redirect_url) {
-    char mesg_denied[WEBSNSHDR+URL];
-    int redirect_url_len = 0;
+void websns_accept(int fd, struct websns_req *websns_request) {
+    struct websns_resp *websns_resp_accept = NULL;
+
+    websns_resp_accept->size = htons(WEBSNS_HDR);
+    websns_resp_accept->vers_maj = websns_request->vers_maj;
+    websns_resp_accept->vers_min = websns_request->vers_min;
+    websns_resp_accept->vers_pat = websns_request->vers_pat;
+    websns_resp_accept->serial = websns_request->serial;
+    websns_resp_accept->code = htons(0);
+    websns_resp_accept->desc = htons(0);
+    websns_resp_accept->cat = htons(0);
+    websns_resp_accept->urlsize = htons(0);
+
+    // send accept response
+    send(fd, websns_resp_accept, WEBSNS_HDR, 0);
+    free(websns_resp_accept);
+}
+
+void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url) {
+    struct websns_resp *websns_resp_deny = NULL;
+    int urlsize = 0;
     int i = 0;
 
-    mesg_denied[0] = 0;
-    mesg_denied[1] = WEBSNSHDR;
-    for(i = 0; i < 10; i++)
-        mesg_denied[2+i] = req_id[i];
-    mesg_denied[12] = 0; // code
-    mesg_denied[13] = 1; // code
-    mesg_denied[14] = 0;  // desc
-    mesg_denied[15] = 1; // desc
-    mesg_denied[16] = 0;   // cat
-    mesg_denied[17] = 0; // cat
-    mesg_denied[18] = 0; // url_size
-    mesg_denied[19] = 0; // url_size
+    websns_resp_deny->size = htons(WEBSNS_HDR);
+    websns_resp_deny->vers_maj = websns_request->vers_maj;
+    websns_resp_deny->vers_min = websns_request->vers_min;
+    websns_resp_deny->vers_pat = websns_request->vers_pat;
+    websns_resp_deny->serial = websns_request->serial;
+    websns_resp_deny->code = htons(1);
+    websns_resp_deny->desc = htons(1);
+    websns_resp_deny->cat = htons(0);
+    websns_resp_deny->urlsize = htons(0);
 
     if (redirect_url != NULL) {
-        redirect_url_len = strlen(redirect_url) + 1;
-        if (redirect_url_len <= URL) {
-            mesg_denied[1] += redirect_url_len;
-            mesg_denied[19] = redirect_url_len;
-            for(i = 0; i < redirect_url_len; i++)
-                mesg_denied[WEBSNSHDR+i] = redirect_url[i];
+        urlsize = strlen(redirect_url) + 1;
+        if (urlsize < (URL_SIZE - WEBSNS_HDR)) {
+            websns_resp_deny->size = htons(WEBSNS_HDR + urlsize);
+            websns_resp_deny->urlsize = htons(urlsize);
+            for(i = 0; i < urlsize; i++)
+                websns_resp_deny->url[i] = redirect_url[i];
         }
     }
 
     // send denied response
-    sendto(fd, mesg_denied, WEBSNSHDR + redirect_url_len, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+    send(fd, websns_resp_deny, WEBSNS_HDR + urlsize, 0);
+    free(websns_resp_deny);
 }
 
-struct uf_request websns_request(char mesg[REQ]) {
-    /* version 1:
-       reqsize(2),reqid(10),code(2),descr(2),srcip(4),dstip(4),usrsize(2),urlsize(2),url(urlsize)
-       version 4:
-       reqsize(2),reqid(10),code(2),descr(2),srcip(4),dstip(4),urlsize(2),url(urlsize) */
-    struct uf_request request = {"", 0, "", "", 0, "", 0, ""};
-    int ips[8];
-    int i = 0;
-    int offset = 0;
+struct uf_request websns_validate(struct websns_req *websns_request, int msgsize) {
+    struct uf_request request;
+    int i;
 
-    // Get request id
-    for(i = 0; i < 10; i++)
-        request.id[i] = mesg[2+i];
+    request.type = UNKNOWN;
 
-    // Get type of request
-    if ((mesg[0] == 0) && (mesg[1] == 12)) {
-        request.type = WEBSNSALIVE;
+    if (msgsize == WEBSNS_ALIVE) {
+        request.type = WEBSNS_ALIVE;
         return request;
     }
-    if ((mesg[12] == 0) && (mesg[13] == 1)) {
-        request.type = WEBSNSREQ;
+
+    if (msgsize > WEBSNS_REQ_SIZE && ntohs(websns_request->code) == WEBSNS_REQ && ntohs(websns_request->urlsize) < URL_SIZE) {
+        request.type = WEBSNS_REQ;
+        request.srcip = websns_request->srcip;
+        request.dstip = websns_request->dstip;
+        for(i = 0; i < ntohs(websns_request->urlsize); i++)
+            request.url[i] = websns_request->url[i];
+        return request;
     }
-
-    // fetch srcip and dstip
-    for(i = 0; i < 8; i++) {
-        ips[i] = mesg[16+i];
-        if (ips[i] < 0)
-            ips[i] += 256;
-    }
-    bzero(request.srcip, sizeof(request.srcip));
-    bzero(request.dstip, sizeof(request.dstip));
-    sprintf(request.srcip,"%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
-    sprintf(request.dstip,"%d.%d.%d.%d", ips[4], ips[5], ips[6], ips[7]);
-
-    // check version
-    if (mesg[24] == 0 && mesg[25] == 0)
-        offset = 2;
-
-    // fetch url length
-    request.urllen = (mesg[24+offset]*256) + mesg[25+offset];
-    if (request.urllen < 0)
-        request.urllen += 256;
-    if (request.urllen > URL)
-        request.urllen = URL;
-
-    // fetch url
-    for(i = 0; i < request.urllen; i++)
-        request.url[i] = mesg[26+offset+i];
 
     return request;
 }

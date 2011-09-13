@@ -8,5 +8,5 @@
 
 extern int squidguard_getfd(FILE *sg_fd[2]);
 extern int squidguard_closefd(FILE *sg_fd[2]);
-extern int squidguard_backend(FILE *sg_fd[2], char srcip[IP], char url[URL], int debug);
+extern int squidguard_backend(FILE *sg_fd[2], struct in_addr srcip, char url[URL_SIZE], int debug);
 

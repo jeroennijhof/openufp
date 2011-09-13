@@ -8,8 +8,8 @@
 
 #include "openufp.h"
 
-int blacklist_backend(char *blacklist, char url[URL], int debug) {
-    char line[URL];
+int blacklist_backend(char *blacklist, char url[URL_SIZE], int debug) {
+    char line[URL_SIZE];
     FILE *fd = NULL;
     int linenum = 0;
 
@@ -20,7 +20,7 @@ int blacklist_backend(char *blacklist, char url[URL], int debug) {
     }
 
     while (fgets(line, sizeof(line)-1, fd) != NULL) {
-        char blacklist_url[URL];
+        char blacklist_url[URL_SIZE];
 
         linenum++;
         if (line[0] == '#' || line[0] == '\n') continue;

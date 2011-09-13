@@ -8,116 +8,76 @@
 
 #include "openufp.h"
 
-void n2h2_alive(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
-    char mesg_alive[N2H2RES];
-    int i;
+void n2h2_alive(int fd, struct n2h2_req *n2h2_request) {
+    struct n2h2_resp *n2h2_resp_alive = NULL;
 
-    mesg_alive[0] = 3;
-    mesg_alive[1] = 2;
-    for(i = 0; i < 4; i++)
-        mesg_alive[2+i] = req_id[i];
-    for(i = 0; i < 4; i++)
-        mesg_alive[6+i] = 0;
+    n2h2_resp_alive->code = htons(770);
+    n2h2_resp_alive->serial = n2h2_request->serial;
+    n2h2_resp_alive->unknown = htons(0);
+    n2h2_resp_alive->urlsize = htons(0);
  
     // send alive response
-    sendto(fd, mesg_alive, N2H2RES, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+    send(fd, n2h2_resp_alive, N2H2_HDR, 0);
+    free(n2h2_resp_alive);
 }
 
-void n2h2_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]) {
-    char mesg_accept[N2H2RES];
-    int i;
+void n2h2_accept(int fd, struct n2h2_req *n2h2_request) {
+    struct n2h2_resp *n2h2_resp_accept = NULL;
 
-    mesg_accept[0] = 0;
-    mesg_accept[1] = 2;
-    for(i = 0; i < 4; i++)
-        mesg_accept[2+i] = req_id[i];
-    for(i = 0; i < 4; i++)
-        mesg_accept[6+i] = 0;
-
+    n2h2_resp_accept->code = htons(2);
+    n2h2_resp_accept->serial = n2h2_request->serial;
+    n2h2_resp_accept->unknown = htons(0);
+    n2h2_resp_accept->urlsize = htons(0);
+ 
     // send accept response
-    sendto(fd, mesg_accept, N2H2RES, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+    send(fd, n2h2_resp_accept, N2H2_HDR, 0);
+    free(n2h2_resp_accept);
 }
 
-void n2h2_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *redirect_url) {
-    char mesg_denied[N2H2RES+URL];
-    int redirect_url_len = 0;
+void n2h2_deny(int fd, struct n2h2_req *n2h2_request, char *redirect_url) {
+    struct n2h2_resp *n2h2_resp_deny = NULL;
+    int urlsize = 0;
     int i;
 
-    mesg_denied[0] = 1;
-    mesg_denied[1] = 2;
-    for(i = 0; i < 4; i++)
-        mesg_denied[2+i] = req_id[i];
-    for(i = 0; i < 4; i++)
-        mesg_denied[6+i] = 0;
+    n2h2_resp_deny->code = htons(258);
+    n2h2_resp_deny->serial = n2h2_request->serial;
+    n2h2_resp_deny->unknown = htons(0);
+    n2h2_resp_deny->urlsize = htons(0);
 
     // send custom redirect url if defined
     if (redirect_url != NULL) {
-        redirect_url_len = strlen(redirect_url) + 1;
-        if (redirect_url_len <= URL) {
-            mesg_denied[6] = redirect_url_len / 768;
-            mesg_denied[7] = (redirect_url_len % 768) / 512;
-            mesg_denied[8] = ((redirect_url_len % 768) % 512) / 256;
-            mesg_denied[9] = ((redirect_url_len % 768) % 512) % 256;
-            for(i = 0; i < redirect_url_len; i++)
-                mesg_denied[N2H2RES+i] = redirect_url[i];
+        urlsize = strlen(redirect_url) + 1;
+        if (urlsize < URL_SIZE) {
+            n2h2_resp_deny->urlsize = htons(urlsize);
+            for(i = 0; i < urlsize; i++)
+                n2h2_resp_deny->url[i] = redirect_url[i];
         }
     }
 
     // send denied response
-    sendto(fd, mesg_denied, N2H2RES + redirect_url_len, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+    send(fd, n2h2_resp_deny, N2H2_HDR + urlsize, 0);
+    free(n2h2_resp_deny);
 }
 
-struct uf_request n2h2_request(char mesg[REQ]) {
-    // URL Request req(2),reqid(4),srcip(4),dstip(4),urllen(2),usrlen(2),url(urllen),user(usrlen)
-    struct uf_request request = {"", 0, "", "", 0, "", 0, ""};
-    int ips[8];
+struct uf_request n2h2_validate(struct n2h2_req *n2h2_request, int msgsize) {
+    struct uf_request request;
     int i;
 
-    // Get type of request
-    if ((mesg[0] == 2) && (mesg[1] == 3)) {
-        request.type = N2H2ALIVE;
+    request.type = UNKNOWN;
+
+    if (msgsize == N2H2_HDR && ntohs(n2h2_request->code) == N2H2_ALIVE) {
+        request.type = N2H2_ALIVE;
         return request;
     }
-    if ((mesg[0] == 2) && (mesg[1] == 0)) {
-        request.type = N2H2REQ;
+
+    if (msgsize > N2H2_REQ_SIZE && ntohs(n2h2_request->code) == N2H2_REQ && ntohs(n2h2_request->urlsize) < URL_SIZE) {
+        request.type = N2H2_REQ;
+        request.srcip = n2h2_request->srcip;
+        request.dstip = n2h2_request->dstip;
+        for(i = 0; i < ntohs(n2h2_request->urlsize); i++)
+            request.url[i] = n2h2_request->url[i];
+        return request;
     }
-
-    // Get request id
-    for(i = 0; i < 4; i++)
-        request.id[i] = mesg[2+i];
-
-    // fetch srcip and dstip
-    for(i = 0; i < 8; i++) {
-        ips[i] = mesg[6+i];
-        if (ips[i] < 0)
-            ips[i] += 256;
-    }
-    bzero(request.srcip, sizeof(request.srcip));
-    bzero(request.dstip, sizeof(request.dstip));
-    sprintf(request.srcip, "%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
-    sprintf(request.dstip, "%d.%d.%d.%d", ips[4], ips[5], ips[6], ips[7]);
-
-    // fetch url length
-    request.urllen = (mesg[14]*256) + mesg[15];
-    if (request.urllen < 0)
-        request.urllen += 256;
-    if (request.urllen > URL)
-        request.urllen = URL;
-
-    // fetch user length
-    request.usrlen = (mesg[16]*256) + mesg[17];
-    if (request.usrlen < 0)
-        request.usrlen += 256;
-    if (request.usrlen > USER)
-        request.usrlen = USER;
-
-    // fetch url
-    for(i = 0; i < request.urllen; i++)
-        request.url[i] = mesg[18+i];
-
-    // fetch user
-    for(i = 0; i < request.usrlen; i++)
-        request.user[i] = mesg[18+request.urllen+i];
 
     return request;
 }

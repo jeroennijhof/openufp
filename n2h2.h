@@ -7,12 +7,31 @@
  */
 
 #define N2H2 1
-#define N2H2REQ 3
-#define N2H2ALIVE 5
-#define N2H2RES 10
+#define N2H2_HDR 10
+#define N2H2_ALIVE 515
+#define N2H2_REQ 512
+#define N2H2_REQ_SIZE 18
 
-extern void n2h2_alive(int fd, struct sockaddr_in cli_addr, char req_id[REQID]);
-extern void n2h2_accept(int fd, struct sockaddr_in cli_addr, char req_id[REQID]);
-extern void n2h2_deny(int fd, struct sockaddr_in cli_addr, char req_id[REQID], char *redirect_url);
-extern struct uf_request n2h2_request(char mesg[REQ]);
+struct n2h2_req {
+    u_int16_t code;
+    u_int32_t serial;
+    struct in_addr srcip;
+    struct in_addr dstip;
+    u_int16_t urlsize;
+    u_int16_t usrsize;
+    char url[URL_SIZE];
+};
+
+struct n2h2_resp {
+    u_int16_t code;
+    u_int32_t serial;
+    u_int16_t unknown;
+    u_int16_t urlsize;
+    char url[URL_SIZE];
+};
+
+extern void n2h2_alive(int fd, struct n2h2_req *n2h2_request);
+extern void n2h2_accept(int fd, struct n2h2_req *n2h2_request);
+extern void n2h2_deny(int fd, struct n2h2_req *n2h2_request, char *redirect_url);
+extern struct uf_request n2h2_validate(struct n2h2_req *n2h2_request, int msgsize);
 

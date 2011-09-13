@@ -34,7 +34,7 @@ int close_cache(DB *dbp, int debug) {
     return dbp->close(dbp, 0);
 }
 
-int in_cache(DB *dbp, char url[URL], int expire_sec, int debug) {
+int in_cache(DB *dbp, char url[URL_SIZE], int expire_sec, int debug) {
     DBT key, data;
     int ret;
     char sec[15];
@@ -69,7 +69,7 @@ int in_cache(DB *dbp, char url[URL], int expire_sec, int debug) {
     return 0;
 }
 
-int add_cache(DB *dbp, char url[URL], int debug) {
+int add_cache(DB *dbp, char url[URL_SIZE], int debug) {
     DBT key, data;
     int ret;
     char sec[15];
@@ -98,7 +98,7 @@ int add_cache(DB *dbp, char url[URL], int debug) {
     return -1;
 }
 
-int rm_cache(DB *dbp, char url[URL], int debug) {
+int rm_cache(DB *dbp, char url[URL_SIZE], int debug) {
     DBT key;
     int ret;
 
