@@ -75,7 +75,7 @@ void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url) 
 }
 
 struct uf_request websns_validate(struct websns_req *websns_request, int msgsize) {
-    struct uf_request request;
+    struct uf_request request = { 0, {0}, {0}, "" };
     int i;
 
     request.type = UNKNOWN;
