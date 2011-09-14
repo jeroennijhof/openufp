@@ -43,8 +43,27 @@ def send_url(s, protocol, url):
         data = s.recv(1024)
         print 'Received', repr(data)
     else:
-        print 'Not supported yet'
-
+        print 'Sending url request: %s' % url
+        len1 = (26+len(url)) / 256
+        len2 = (26+len(url)) % 256
+        url_req = chr(len1)
+        url_req += chr(len2)
+        url_req += '\x00\x80\x00\x01\x00\x00\x04\x01\x02\x05\x00\x01\x00\x00'
+        srcip = [192, 168, 0, 1]
+        destip = [192, 168, 100, 1]
+        for chars in srcip:
+            url_req += chr(chars)
+        for chars in destip:
+            url_req += chr(chars)
+        len1 = len(url) / 256
+        len2 = len(url) % 256
+        url_req += chr(len1)
+        url_req += chr(len2)
+        url_req += bytes(url)
+        s.sendall(url_req)
+        data = s.recv(1024)
+        print 'Received', repr(data)
+        
 
 def main():
     try:
@@ -88,7 +107,6 @@ def main():
 
     if url != '':
         send_url(s, protocol, url)
-        time.sleep(1)
         send_url(s, protocol, url)
 
     s.close()
