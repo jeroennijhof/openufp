@@ -20,7 +20,7 @@ struct n2h2_req {
     u_int16_t urlsize;
     u_int16_t usrsize;
     char url[URL_SIZE];
-};
+} __attribute__((__packed__));
 
 struct n2h2_resp {
     u_int16_t code;
@@ -28,7 +28,7 @@ struct n2h2_resp {
     u_int16_t unknown;
     u_int16_t urlsize;
     char url[URL_SIZE];
-};
+} __attribute__((__packed__));
 
 extern void n2h2_alive(int fd, struct n2h2_req *n2h2_request);
 extern void n2h2_accept(int fd, struct n2h2_req *n2h2_request);

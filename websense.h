@@ -24,7 +24,7 @@ struct websns_req {
     struct in_addr dstip;
     u_int16_t urlsize;
     char url[URL_SIZE];
-};
+} __attribute__((__packed__));
 
 struct websns_req_v1 {
     u_int16_t size;
@@ -39,7 +39,7 @@ struct websns_req_v1 {
     u_int16_t usrsize;
     u_int16_t urlsize;
     char url[URL_SIZE];
-};
+} __attribute__((__packed__));
 
 struct websns_resp {
     u_int16_t size;
@@ -52,7 +52,7 @@ struct websns_resp {
     u_int16_t cat;
     u_int16_t urlsize;
     char url[URL_SIZE];
-};
+} __attribute__((__packed__));
 
 extern void websns_alive(int fd, struct websns_req *websns_request);
 extern void websns_accept(int fd, struct websns_req *websns_request);

@@ -10,12 +10,16 @@ def usage():
 def send_alive(s, protocol):
     if protocol == 'n2h2':
         print 'Sending alive request'
-        alive = '\x02\x03\x01\x01\x01\x01\x00\x00\x00\x00'
+        alive = '\x02\x03\x01\x02\x02\x01\x00\x00\x00\x00'
         s.sendall(alive)
         data = s.recv(256)
         print 'Received', repr(data)
     else:
-        print 'Not supported yet'
+        print 'Sending alive request'
+        alive = '\x00\x0c\x00\x81\x00\x01\x00\x00\x02\x0a\x09\x09'
+        s.sendall(alive)
+        data = s.recv(256)
+        print 'Received', repr(data)
 
 def send_url(s, protocol, url):
     if protocol == 'n2h2':
