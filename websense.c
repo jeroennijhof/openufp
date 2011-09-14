@@ -94,3 +94,21 @@ struct uf_request websns_validate(struct websns_req *websns_request, int msgsize
     return request;
 }
 
+struct websns_req *websns_convert(char msg[REQ_SIZE], int msgsize) {
+    struct websns_req *websns_request = (struct websns_req *)msg;
+    char newmsg[REQ_SIZE];
+    int offset = 0;
+    int i;
+
+    // Check if it is a version 1 request
+    if (msgsize > WEBSNS_REQ_SIZE && ntohs(websns_request->code) == WEBSNS_REQ && ntohs(websns_request->urlsize) == 0) {
+        for (i = 0; i < msgsize; i++) {
+            if (i == 24)
+                offset = 2;
+            newmsg[i] = msg[i + offset];
+        }
+        websns_request = (struct websns_req *)newmsg;
+    }
+
+    return websns_request;
+}

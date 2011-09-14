@@ -218,7 +218,7 @@ int main(int argc, char**argv) {
                         n2h2_request = (struct n2h2_req *)msg;
                         request = n2h2_validate(n2h2_request, msgsize);
                     } else {
-                        websns_request = (struct websns_req *)msg;
+                        websns_request = websns_convert(msg, msgsize);
                         request = websns_validate(websns_request, msgsize);
                     }
                     if (request.type == UNKNOWN) {
