@@ -9,6 +9,17 @@
 #include "openufp.h"
 #define DATABASE "/var/cache/openufp/cache.db"
 
+void get_hash(const char *s, char hash[10]) {
+    unsigned int _hash = 0;
+    int c;
+
+    while((c = *s++)) {
+        /* hash = hash * 33 ^ c */
+        _hash = ((_hash << 5) + _hash) ^ c;
+    }
+    snprintf(hash, sizeof(hash), "%u", _hash);
+}
+
 DB *open_cache() {
     DB *dbp;
     int ret;
@@ -34,7 +45,7 @@ int close_cache(DB *dbp, int debug) {
     return dbp->close(dbp, 0);
 }
 
-int in_cache(DB *dbp, char url[URL_SIZE], int expire_sec, int debug) {
+int in_cache(DB *dbp, char hash[10], int expire_sec, int debug) {
     DBT key, data;
     int ret;
     char sec[15];
@@ -48,28 +59,28 @@ int in_cache(DB *dbp, char url[URL_SIZE], int expire_sec, int debug) {
 
     bzero(&key, sizeof(key));
     bzero(&data, sizeof(data));
-    key.data = url;
-    key.size = strlen(url)+1;
+    key.data = hash;
+    key.size = strlen(hash)+1;
     data.data = sec;
     data.size = strlen(sec)+1;
 
     if ((ret = dbp->get(dbp, NULL, &key, &data, 0)) == 0) {
         if (strcmp((char *)data.data, sec) > 0) {
             if (debug > 0)
-                syslog(LOG_INFO, "cache: url %s retrieved, time %s expire at %s.",
+                syslog(LOG_INFO, "cache: hash %s retrieved, time %s expire at %s.",
                         (char *)key.data, (char *)data.data, sec);
             return 1;
         }
         if (debug > 0)
-            syslog(LOG_INFO, "cache: url in cache expired.");
-        rm_cache(dbp, url, debug);
+            syslog(LOG_INFO, "cache: hash in cache expired.");
+        rm_cache(dbp, hash, debug);
     }
     if (debug > 0)
-        syslog(LOG_INFO, "cache: url not in cache.");
+        syslog(LOG_INFO, "cache: hash not in cache.");
     return 0;
 }
 
-int add_cache(DB *dbp, char url[URL_SIZE], int debug) {
+int add_cache(DB *dbp, char hash[10], int debug) {
     DBT key, data;
     int ret;
     char sec[15];
@@ -83,8 +94,8 @@ int add_cache(DB *dbp, char url[URL_SIZE], int debug) {
 
     bzero(&key, sizeof(key));
     bzero(&data, sizeof(data));
-    key.data = url;
-    key.size = strlen(url)+1;
+    key.data = hash;
+    key.size = sizeof(hash);
     data.data = sec;
     data.size = strlen(sec)+1;
 
@@ -98,7 +109,7 @@ int add_cache(DB *dbp, char url[URL_SIZE], int debug) {
     return -1;
 }
 
-int rm_cache(DB *dbp, char url[URL_SIZE], int debug) {
+int rm_cache(DB *dbp, char hash[10], int debug) {
     DBT key;
     int ret;
 
@@ -111,8 +122,8 @@ int rm_cache(DB *dbp, char url[URL_SIZE], int debug) {
     }
 
     bzero(&key, sizeof(key));
-    key.data = url;
-    key.size = strlen(url)+1;
+    key.data = hash;
+    key.size = sizeof(hash);
 
     if ((ret = dbp->del(dbp, NULL, &key, 0)) == 0) {
         dbp->sync(dbp, 0);

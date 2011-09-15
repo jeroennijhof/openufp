@@ -1,4 +1,5 @@
 * 2011/09/13 v1.06 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Using hash as key for caching improvements
   Using structs and check for overflows
   Added websense version 1 and 4 support
   Websense keepalive needs to be answered by accept

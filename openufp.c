@@ -66,6 +66,7 @@ int main(int argc, char**argv) {
     int c;
     while ((c = getopt(argc, argv, "l:r:c:C:d:nwp:f:g")) != -1) {
         char *p;
+        char hash[10];
         DB *cachedb;
         int ret = 0;
         switch(c) {
@@ -80,7 +81,8 @@ int main(int argc, char**argv) {
                 break;
             case 'C':
                 cachedb = open_cache();
-                if (rm_cache(cachedb, optarg, 255) == -1)
+                get_hash(optarg, hash);
+                if (rm_cache(cachedb, hash, 255) == -1)
                     ret = 1;
                 close_cache(cachedb, 0);
                 exit(ret);
@@ -199,6 +201,7 @@ int main(int argc, char**argv) {
                     syslog(LOG_INFO, "caching disabled.");
 
                 int cached = 0;
+                char hash[10];
                 struct websns_req *websns_request = NULL;
                 struct n2h2_req *n2h2_request = NULL;
                 for(;;) {
@@ -248,7 +251,8 @@ int main(int argc, char**argv) {
                             syslog(LOG_INFO, "received url request.");
 
                         // check if cached
-                        cached = in_cache(cachedb, request.url, cache_exp_secs, debug);
+                        get_hash(request.url, hash);
+                        cached = in_cache(cachedb, hash, cache_exp_secs, debug);
                         if (cached == -1) // Happens when there is a cache problem
                             cached = 0;
 
@@ -283,7 +287,7 @@ int main(int argc, char**argv) {
                                 websns_accept(cli_fd, websns_request);
                             }
                             if (!cached)
-                                add_cache(cachedb, request.url, debug);
+                                add_cache(cachedb, hash, debug);
                             if (debug > 0)
                                 syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s.",
                                                  inet_ntoa(request.srcip), inet_ntoa(request.dstip), request.url);
