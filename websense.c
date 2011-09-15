@@ -103,7 +103,7 @@ struct websns_req *websns_convert(char msg[REQ_SIZE], int msgsize) {
     // check if it's version 1
     if (msgsize > WEBSNS_REQ_SIZE && ntohs(websns_request->code) == WEBSNS_REQ && ntohs(websns_request->urlsize) == 0) {
         // convert to version 4
-        for (i = 0; i < msgsize; i++) {
+        for (i = 0; i < (msgsize - 2); i++) {
             if (i == 24)
                 offset = 2;
             newmsg[i] = msg[i + offset];
