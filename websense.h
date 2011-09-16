@@ -43,5 +43,5 @@ extern void websns_alive(int fd, struct websns_req *websns_request);
 extern void websns_accept(int fd, struct websns_req *websns_request);
 extern void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url);
 extern struct uf_request websns_validate(struct websns_req *websns_request, int msgsize);
-extern struct websns_req *websns_convert(char msg[REQ_SIZE], int msgsize);
+extern void websns_convert(struct websns_req *websns_request, char msg[REQ_SIZE], int msgsize);
 

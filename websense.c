@@ -94,8 +94,7 @@ struct uf_request websns_validate(struct websns_req *websns_request, int msgsize
     return request;
 }
 
-struct websns_req *websns_convert(char msg[REQ_SIZE], int msgsize) {
-    struct websns_req *websns_request = (struct websns_req *)msg;
+void websns_convert(struct websns_req *websns_request, char msg[REQ_SIZE], int msgsize) {
     char newmsg[REQ_SIZE];
     int offset = 0;
     int i;
@@ -110,6 +109,4 @@ struct websns_req *websns_convert(char msg[REQ_SIZE], int msgsize) {
         }
         websns_request = (struct websns_req *)newmsg;
     }
-
-    return websns_request;
 }
