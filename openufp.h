@@ -17,7 +17,7 @@
 // request struct and defs
 #define UNKNOWN 65535
 struct uf_request {
-    u_int16_t type;
+    uint16_t type;
     struct in_addr srcip;
     struct in_addr dstip;
     char url[URL_SIZE];

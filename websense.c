@@ -16,7 +16,7 @@ void websns_alive(int fd, struct websns_req *websns_request) {
     websns_resp_alive.vers_min = websns_request->vers_min;
     websns_resp_alive.vers_pat = websns_request->vers_pat;
     websns_resp_alive.serial = websns_request->serial;
-    websns_resp_alive.code = htons(0);
+    websns_resp_alive.code = htons(WEBSNS_ALIVE_RESP);
     websns_resp_alive.desc = htons(65535);
     websns_resp_alive.cat = htons(0);
     websns_resp_alive.urlsize = htons(0);
@@ -33,7 +33,7 @@ void websns_accept(int fd, struct websns_req *websns_request) {
     websns_resp_accept.vers_min = websns_request->vers_min;
     websns_resp_accept.vers_pat = websns_request->vers_pat;
     websns_resp_accept.serial = websns_request->serial;
-    websns_resp_accept.code = htons(0);
+    websns_resp_accept.code = htons(WEBSNS_REQ_ACCEPT);
     websns_resp_accept.desc = htons(0);
     websns_resp_accept.cat = htons(0);
     websns_resp_accept.urlsize = htons(0);
@@ -52,7 +52,7 @@ void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url) 
     websns_resp_deny.vers_min = websns_request->vers_min;
     websns_resp_deny.vers_pat = websns_request->vers_pat;
     websns_resp_deny.serial = websns_request->serial;
-    websns_resp_deny.code = htons(1);
+    websns_resp_deny.code = htons(WEBSNS_REQ_DENY);
     websns_resp_deny.desc = htons(1);
     websns_resp_deny.cat = htons(0);
     websns_resp_deny.urlsize = htons(0);
@@ -77,15 +77,15 @@ struct uf_request websns_validate(struct websns_req *websns_request, int msgsize
 
     request.type = UNKNOWN;
 
-    if (msgsize == WEBSNS_ALIVE) {
+    if (msgsize == WEBSNS_ALIVE_SIZE) {
         request.type = WEBSNS_ALIVE;
         return request;
     }
 
     if (msgsize > WEBSNS_REQ_SIZE && ntohs(websns_request->code) == WEBSNS_REQ && ntohs(websns_request->urlsize) < URL_SIZE) {
         request.type = WEBSNS_REQ;
-        request.srcip = websns_request->srcip;
-        request.dstip = websns_request->dstip;
+        request.srcip.s_addr = websns_request->srcip;
+        request.dstip.s_addr = websns_request->dstip;
         for(i = 0; i < ntohs(websns_request->urlsize); i++)
             request.url[i] = websns_request->url[i];
         return request;
@@ -107,6 +107,7 @@ void websns_convert(struct websns_req *websns_request, char msg[REQ_SIZE], int m
                 offset = 2;
             newmsg[i] = msg[i + offset];
         }
-        websns_request = (struct websns_req *)newmsg;
+        struct websns_req *websns_vers1 = (struct websns_req *)newmsg;
+        *websns_request = *websns_vers1;
     }
 }

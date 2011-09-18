@@ -9,24 +9,28 @@
 #define N2H2 1
 #define N2H2_HDR 10
 #define N2H2_ALIVE 515
+#define N2H2_ALIVE_RESP 770
+#define N2H2_ALIVE_SIZE 20
 #define N2H2_REQ 512
+#define N2H2_REQ_ACCEPT 2
+#define N2H2_REQ_DENY 258
 #define N2H2_REQ_SIZE 18
 
 struct n2h2_req {
-    u_int16_t code;
-    u_int32_t serial;
-    struct in_addr srcip;
-    struct in_addr dstip;
-    u_int16_t urlsize;
-    u_int16_t usrsize;
+    uint16_t code;
+    uint32_t serial;
+    uint32_t srcip;
+    uint32_t dstip;
+    uint16_t urlsize;
+    uint16_t usrsize;
     char url[URL_SIZE];
 } __attribute__((__packed__));
 
 struct n2h2_resp {
-    u_int16_t code;
-    u_int32_t serial;
-    u_int16_t unknown;
-    u_int16_t urlsize;
+    uint16_t code;
+    uint32_t serial;
+    uint16_t unknown;
+    uint16_t urlsize;
     char url[URL_SIZE];
 } __attribute__((__packed__));
 

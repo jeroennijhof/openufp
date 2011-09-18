@@ -26,11 +26,13 @@ DB *open_cache() {
 
     if ((ret = db_create(&dbp, NULL, 0)) != 0) {
         syslog(LOG_WARNING, "cache: %s.", db_strerror(ret));
+        free(dbp);
         return NULL;
     }
     if ((ret = dbp->open(dbp, NULL, DATABASE, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
         syslog(LOG_WARNING, "cache: %s.", db_strerror(ret));
         close_cache(dbp, 0);
+        free(dbp);
         return NULL;
     } 
     return dbp;
@@ -95,7 +97,7 @@ int add_cache(DB *dbp, char hash[10], int debug) {
     bzero(&key, sizeof(key));
     bzero(&data, sizeof(data));
     key.data = hash;
-    key.size = sizeof(hash);
+    key.size = strlen(hash)+1;
     data.data = sec;
     data.size = strlen(sec)+1;
 
@@ -123,7 +125,7 @@ int rm_cache(DB *dbp, char hash[10], int debug) {
 
     bzero(&key, sizeof(key));
     key.data = hash;
-    key.size = sizeof(hash);
+    key.size = strlen(hash)+1;
 
     if ((ret = dbp->del(dbp, NULL, &key, 0)) == 0) {
         dbp->sync(dbp, 0);

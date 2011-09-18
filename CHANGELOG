@@ -1,4 +1,6 @@
 * 2011/09/13 v1.06 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Using more defines
+  Fixed n2h2 alive size
   Fixed websense version 1 bug
   Using hash as key for caching improvements
   Using structs and check for overflows

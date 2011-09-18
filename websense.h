@@ -9,33 +9,37 @@
 #define WEBSNS 2
 #define WEBSNS_HDR 20
 #define WEBSNS_ALIVE 12
+#define WEBSNS_ALIVE_RESP 0
+#define WEBSNS_ALIVE_SIZE 12
 #define WEBSNS_REQ 1
+#define WEBSNS_REQ_ACCEPT 0
+#define WEBSNS_REQ_DENY 1
 #define WEBSNS_REQ_SIZE 26
 
 struct websns_req {
-    u_int16_t size;
-    u_int16_t vers_maj;
-    u_int16_t vers_min;
-    u_int16_t vers_pat;
-    u_int32_t serial;
-    u_int16_t code;
-    u_int16_t desc;
-    struct in_addr srcip;
-    struct in_addr dstip;
-    u_int16_t urlsize;
+    uint16_t size;
+    uint16_t vers_maj;
+    uint16_t vers_min;
+    uint16_t vers_pat;
+    uint32_t serial;
+    uint16_t code;
+    uint16_t desc;
+    uint32_t srcip;
+    uint32_t dstip;
+    uint16_t urlsize;
     char url[URL_SIZE];
 } __attribute__((__packed__));
 
 struct websns_resp {
-    u_int16_t size;
-    u_int16_t vers_maj;
-    u_int16_t vers_min;
-    u_int16_t vers_pat;
-    u_int32_t serial;
-    u_int16_t code;
-    u_int16_t desc;
-    u_int16_t cat;
-    u_int16_t urlsize;
+    uint16_t size;
+    uint16_t vers_maj;
+    uint16_t vers_min;
+    uint16_t vers_pat;
+    uint32_t serial;
+    uint16_t code;
+    uint16_t desc;
+    uint16_t cat;
+    uint16_t urlsize;
     char url[URL_SIZE];
 } __attribute__((__packed__));
 

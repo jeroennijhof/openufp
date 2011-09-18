@@ -202,8 +202,8 @@ int main(int argc, char**argv) {
 
                 int cached = 0;
                 char hash[10];
-                struct websns_req *websns_request = NULL;
                 struct n2h2_req *n2h2_request = NULL;
+                struct websns_req *websns_request = NULL;
                 for(;;) {
                     bzero(&msg, sizeof(msg));
                     msgsize = recvfrom(cli_fd, msg, REQ_SIZE, 0, (struct sockaddr *)&cli_addr, &cli_size);
@@ -268,9 +268,9 @@ int main(int argc, char**argv) {
                         }
 
                         // parse url to proxy
-                        if (!cached && !denied && squidguard) {
+                        /*if (!cached && !denied && squidguard) {
                             denied = squidguard_backend(sg_fd, request.srcip, request.url, debug);
-                        }
+                        }*/
 
                         if (denied) {
                             if (frontend == N2H2) {
@@ -279,7 +279,7 @@ int main(int argc, char**argv) {
                                 websns_deny(cli_fd, websns_request, redirect_url);
                             }
                             if (debug > 0)
-                                syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s.",
+                                syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s",
                                                  inet_ntoa(request.srcip), inet_ntoa(request.dstip), request.url);
                         } else {
                             if (frontend == N2H2) {
@@ -290,7 +290,7 @@ int main(int argc, char**argv) {
                             if (!cached)
                                 add_cache(cachedb, hash, debug);
                             if (debug > 0)
-                                syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s.",
+                                syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s",
                                                  inet_ntoa(request.srcip), inet_ntoa(request.dstip), request.url);
                         }
                         // reset denied
