@@ -67,11 +67,11 @@ int squidguard_closefd(FILE *sg_fd[2]) {
     return 0;
 }
 
-int squidguard_backend(FILE *sg_fd[2], struct in_addr srcip, char url[URL_SIZE], int debug) {
+int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int debug) {
     char redirect_url[URL_SIZE];
     bzero(redirect_url, sizeof(redirect_url));
 
-    fprintf(sg_fd[1], "%s%s%s%s", url, " ", inet_ntoa(srcip), "/ - - GET\n");
+    fprintf(sg_fd[1], "%s%s%s%s", url, " ", srcip, "/ - - GET\n");
     fflush(sg_fd[1]);
     while (fgets(redirect_url, sizeof(redirect_url)-1, sg_fd[0]) != NULL) {
         if (debug > 1)

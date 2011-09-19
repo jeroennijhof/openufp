@@ -73,6 +73,7 @@ void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url) 
 
 struct uf_request websns_validate(struct websns_req *websns_request, int msgsize) {
     struct uf_request request = { 0, {0}, {0}, "" };
+    struct in_addr srcip, dstip;
     int i;
 
     request.type = UNKNOWN;
@@ -84,8 +85,10 @@ struct uf_request websns_validate(struct websns_req *websns_request, int msgsize
 
     if (msgsize > WEBSNS_REQ_SIZE && ntohs(websns_request->code) == WEBSNS_REQ && ntohs(websns_request->urlsize) < URL_SIZE) {
         request.type = WEBSNS_REQ;
-        request.srcip.s_addr = websns_request->srcip;
-        request.dstip.s_addr = websns_request->dstip;
+        srcip.s_addr = websns_request->srcip;
+        dstip.s_addr = websns_request->dstip;
+        snprintf(request.srcip, sizeof(request.srcip), inet_ntoa(srcip));
+        snprintf(request.dstip, sizeof(request.dstip), inet_ntoa(dstip));
         for(i = 0; i < ntohs(websns_request->urlsize); i++)
             request.url[i] = websns_request->url[i];
         return request;

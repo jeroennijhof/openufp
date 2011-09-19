@@ -58,6 +58,7 @@ void n2h2_deny(int fd, struct n2h2_req *n2h2_request, char *redirect_url) {
 
 struct uf_request n2h2_validate(struct n2h2_req *n2h2_request, int msgsize) {
     struct uf_request request = { 0, {0}, {0}, "" };
+    struct in_addr srcip, dstip;
     int i;
 
     request.type = UNKNOWN;
@@ -69,8 +70,10 @@ struct uf_request n2h2_validate(struct n2h2_req *n2h2_request, int msgsize) {
 
     if (msgsize > N2H2_REQ_SIZE && ntohs(n2h2_request->code) == N2H2_REQ && ntohs(n2h2_request->urlsize) < URL_SIZE) {
         request.type = N2H2_REQ;
-        request.srcip.s_addr = n2h2_request->srcip;
-        request.dstip.s_addr = n2h2_request->dstip;
+        srcip.s_addr = n2h2_request->srcip;
+        dstip.s_addr = n2h2_request->dstip;
+        snprintf(request.srcip, sizeof(request.srcip), inet_ntoa(srcip));
+        snprintf(request.dstip, sizeof(request.dstip), inet_ntoa(dstip));
         for(i = 0; i < ntohs(n2h2_request->urlsize); i++)
             request.url[i] = n2h2_request->url[i];
         return request;

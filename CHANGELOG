@@ -1,4 +1,5 @@
 * 2011/09/13 v1.06 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Fixed inet_ntoa() issue
   Using more defines
   Fixed n2h2 alive size
   Fixed websense version 1 bug

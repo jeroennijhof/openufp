@@ -268,9 +268,9 @@ int main(int argc, char**argv) {
                         }
 
                         // parse url to proxy
-                        /*if (!cached && !denied && squidguard) {
+                        if (!cached && !denied && squidguard) {
                             denied = squidguard_backend(sg_fd, request.srcip, request.url, debug);
-                        }*/
+                        }
 
                         if (denied) {
                             if (frontend == N2H2) {
@@ -280,7 +280,7 @@ int main(int argc, char**argv) {
                             }
                             if (debug > 0)
                                 syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s",
-                                                 inet_ntoa(request.srcip), inet_ntoa(request.dstip), request.url);
+                                                 request.srcip, request.dstip, request.url);
                         } else {
                             if (frontend == N2H2) {
                                 n2h2_accept(cli_fd, n2h2_request);
@@ -291,7 +291,7 @@ int main(int argc, char**argv) {
                                 add_cache(cachedb, hash, debug);
                             if (debug > 0)
                                 syslog(LOG_INFO, "url accepted: srcip %s, dstip %s, url %s",
-                                                 inet_ntoa(request.srcip), inet_ntoa(request.dstip), request.url);
+                                                 request.srcip, request.dstip, request.url);
                         }
                         // reset denied
                         denied = 0;
