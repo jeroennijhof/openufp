@@ -87,8 +87,8 @@ struct uf_request websns_validate(struct websns_req *websns_request, int msgsize
         request.type = WEBSNS_REQ;
         srcip.s_addr = websns_request->srcip;
         dstip.s_addr = websns_request->dstip;
-        snprintf(request.srcip, sizeof(request.srcip), inet_ntoa(srcip));
-        snprintf(request.dstip, sizeof(request.dstip), inet_ntoa(dstip));
+        snprintf(request.srcip, sizeof(request.srcip), "%s", inet_ntoa(srcip));
+        snprintf(request.dstip, sizeof(request.dstip), "%s", inet_ntoa(dstip));
         for(i = 0; i < ntohs(websns_request->urlsize); i++)
             request.url[i] = websns_request->url[i];
         return request;

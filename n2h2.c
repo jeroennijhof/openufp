@@ -72,8 +72,8 @@ struct uf_request n2h2_validate(struct n2h2_req *n2h2_request, int msgsize) {
         request.type = N2H2_REQ;
         srcip.s_addr = n2h2_request->srcip;
         dstip.s_addr = n2h2_request->dstip;
-        snprintf(request.srcip, sizeof(request.srcip), inet_ntoa(srcip));
-        snprintf(request.dstip, sizeof(request.dstip), inet_ntoa(dstip));
+        snprintf(request.srcip, sizeof(request.srcip), "%s", inet_ntoa(srcip));
+        snprintf(request.dstip, sizeof(request.dstip), "%s", inet_ntoa(dstip));
         for(i = 0; i < ntohs(n2h2_request->urlsize); i++)
             request.url[i] = n2h2_request->url[i];
         return request;

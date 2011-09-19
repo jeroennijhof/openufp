@@ -10,7 +10,7 @@ def usage():
 def send_alive(s, protocol):
     if protocol == 'n2h2':
         print 'Sending alive request'
-        alive = '\x02\x03\x01\x02\x02\x01\x00\x00\x00\x00'
+        alive = '\x02\x03\x01\x02\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         s.sendall(alive)
         data = s.recv(256)
         print 'Received', repr(data)

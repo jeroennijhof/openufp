@@ -1,4 +1,6 @@
 * 2011/09/13 v1.06 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Valgrind tests succesful
+  Fixed test/send_request n2h2 alive request
   Fixed inet_ntoa() issue
   Using more defines
   Fixed n2h2 alive size
