@@ -36,7 +36,7 @@ int proxy_backend(char *proxy_ip, int proxy_port, char *proxy_deny_pattern, char
 
     // create proxy request
     bzero(proxy_req, sizeof(proxy_req));
-    sprintf(proxy_req,"%s%s%s", "GET ", url, " HTTP/1.0\r\n\r\n");
+    sprintf(proxy_req,"GET %s HTTP/1.0\r\n\r\n", url);
     proxy_req_len = strlen(proxy_req);
 
     // Send the request to the proxy server, return accept if failes
