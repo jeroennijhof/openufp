@@ -10,7 +10,7 @@
 #include <syslog.h>
 #include <time.h>
 
-#define VERSION "1.06"
+#define VERSION "1.07"
 #define URL_SIZE 65535
 #define REQ_SIZE 65535
 

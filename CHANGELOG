@@ -1,3 +1,8 @@
+* 2011/12/07 v1.07 Jeroen Nijhof <jeroen@nijhofnet.nl>
+  Using defined buffer sizes instead of sizeof
+  Using strlen instead of strstr at squidguard.c
+  Fflush all buffers instead of one
+
 * 2011/09/13 v1.06 Jeroen Nijhof <jeroen@nijhofnet.nl>
   Valgrind tests succesful
   Fixed test/send_request n2h2 alive request
