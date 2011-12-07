@@ -69,18 +69,20 @@ int squidguard_closefd(FILE *sg_fd[2]) {
 
 int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int debug) {
     char redirect_url[URL_SIZE];
-    //bzero(redirect_url, sizeof(redirect_url));
 
     fprintf(sg_fd[1], "%s %s/ - - GET\n", url, srcip);
-    fflush(sg_fd[1]);
-    while (fgets(redirect_url, sizeof(redirect_url)-1, sg_fd[0]) != NULL) {
+    fflush(NULL);
+    while (fgets(redirect_url, URL_SIZE, sg_fd[0]) != NULL) {
+        redirect_url[strlen(redirect_url) - 1] = '\0';
         if (debug > 1)
             syslog(LOG_INFO, "squidguard: redirect_url (%s).", redirect_url);
-        if ((strstr(redirect_url, "http")) != NULL) {
+        if (strlen(redirect_url) > 1) {
             if (debug > 0)
                 syslog(LOG_INFO, "squidguard: url blocked.");
             return 1;
         }
+        if (debug > 0)
+            syslog(LOG_INFO, "squidguard: url accepted.");
         return 0;
     }
     return 0;

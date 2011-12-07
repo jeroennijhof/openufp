@@ -19,7 +19,7 @@ int blacklist_backend(char *blacklist, char url[URL_SIZE], int debug) {
         return 0;
     }
 
-    while (fgets(line, sizeof(line)-1, fd) != NULL) {
+    while (fgets(line, URL_SIZE, fd) != NULL) {
         char blacklist_url[URL_SIZE];
 
         linenum++;
