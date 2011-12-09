@@ -71,7 +71,7 @@ int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int d
     char redirect_url[URL_SIZE];
 
     fprintf(sg_fd[1], "%s %s/ - - GET\n", url, srcip);
-    fflush(NULL);
+    fflush(sg_fd[1]);
     while (fgets(redirect_url, URL_SIZE, sg_fd[0]) != NULL) {
         redirect_url[strlen(redirect_url) - 1] = '\0';
         if (debug > 1)

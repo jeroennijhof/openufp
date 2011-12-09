@@ -3,7 +3,7 @@
 OWNER=root
 GROUP=root
 CC=gcc
-CFLAGS=-O2 -Wall
+CFLAGS=-O2 -Wall -fno-tree-vrp
 LIBS=-ldb
 SBINDIR=/usr/sbin
 
