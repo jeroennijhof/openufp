@@ -70,10 +70,18 @@ int squidguard_closefd(FILE *sg_fd[2]) {
 int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int debug) {
     char redirect_url[URL_SIZE];
 
+    if (sg_fd[1] == NULL) {
+        syslog(LOG_WARNING, "squidguard: could not open fd for input.");
+        return 0;
+    }
     fprintf(sg_fd[1], "%s %s/ - - GET\n", url, srcip);
     fflush(sg_fd[1]);
+
+    if (sg_fd[0] == NULL) {
+        syslog(LOG_WARNING, "squidguard: could not open fd for output.");
+        return 0;
+    }
     while (fgets(redirect_url, URL_SIZE, sg_fd[0]) != NULL) {
-        redirect_url[strlen(redirect_url) - 1] = '\0';
         if (debug > 1)
             syslog(LOG_INFO, "squidguard: redirect_url (%s).", redirect_url);
         if (strlen(redirect_url) > 1) {
