@@ -37,7 +37,7 @@ def send_url(s, protocol, url):
         url_req += chr(len1)
         url_req += chr(len2)
         url_req += '\x00\x00'
-        url_req += bytes(url)
+        url_req += str(url)
         url_req += '\x00'
         s.sendall(url_req)
         data = s.recv(1024)
@@ -59,7 +59,7 @@ def send_url(s, protocol, url):
         len2 = len(url) % 256
         url_req += chr(len1)
         url_req += chr(len2)
-        url_req += bytes(url)
+        url_req += str(url)
         s.sendall(url_req)
         data = s.recv(1024)
         print 'Received', repr(data)
