@@ -17,7 +17,7 @@
 
 // Helper functions
 void usage() {
-    printf("Usage: openufp [OPTIONS] <-n|-w> <BACKEND>\n");
+    printf("\nUsage: openufp [OPTIONS] <-n|-w> <BACKEND>\n");
     printf("Example: openufp -n -p '192.168.1.10:3128:Access Denied.'\n");
     printf("Example: openufp -n -f blacklist -p '192.168.1.10:3128:Access Denied.'\n");
     printf("Example: openufp -C http://www.test.com\n\n");
@@ -43,7 +43,7 @@ void usage() {
     printf("   When squidguard backend is used be sure that this program has rw permissions\n");
     printf("   to the squidguard db files.\n\n");
     printf("Version: %s\n", VERSION);
-    printf("Report bugs to: jeroen@nijhofnet.nl\n");
+    printf("Report bugs to: jeroen@jeroennijhof.nl\n\n");
 }
 
 

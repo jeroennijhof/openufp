@@ -6,6 +6,13 @@ It supports multiple back ends like url blacklist file, squidguard and proxy ser
 This project has been known as n2h2p.
 
 
+Install
+=====
+
+Just type "make" followed by "sudo make install".
+Make sure you have libdb and libdb-dev installed, preferable version 5.1.
+
+
 Usage
 =====
 
