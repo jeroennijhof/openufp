@@ -70,6 +70,11 @@ int squidguard_closefd(FILE *sg_fd[2]) {
 int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int debug) {
     char redirect_url[URL_SIZE];
 
+    if (debug > 2)
+    {
+	syslog(LOG_INFO, "squidguard: url check using IP only: %s for url %s", srcip, url);
+    }
+
     if (sg_fd[1] == NULL) {
         syslog(LOG_WARNING, "squidguard: could not open fd for input.");
         return 0;
@@ -85,6 +90,39 @@ int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int d
         if (debug > 1)
             syslog(LOG_INFO, "squidguard: redirect_url (%s).", redirect_url);
         if (strlen(redirect_url) > 1) {
+            if (debug > 0)
+                syslog(LOG_INFO, "squidguard: url blocked.");
+            return 1;
+        }
+        if (debug > 0)
+            syslog(LOG_INFO, "squidguard: url accepted.");
+        return 0;
+    }
+    return 0;
+}
+
+int squidguard_backend_uid(FILE *sg_fd[2], char srcip[15], char srcusr[URL_SIZE], char url[URL_SIZE], int debug) {
+    char redirect_url[URL_SIZE];
+
+    if (debug > 2)
+    {
+        syslog(LOG_INFO, "squidguard: url check using IP and Username : IP: %s User: %s for url %s", srcip, srcusr, url);
+	syslog(LOG_INFO, "squidguard input: %s %s/ %s - GET\n", url, srcip, srcusr);
+    }
+
+    if (sg_fd[1] == NULL) {
+        syslog(LOG_WARNING, "squidguard: could not open fd for input.");
+        return 0;
+    }
+    fprintf(sg_fd[1], "%s %s/ %s - GET\n", url, srcip, srcusr);
+    fflush(sg_fd[1]);
+
+    if (sg_fd[0] == NULL) {
+        syslog(LOG_WARNING, "squidguard: could not open fd for output.");
+        return 0;
+    }
+    while (fgets(redirect_url, URL_SIZE, sg_fd[0]) != NULL) {
+        if (strlen(redirect_url) > 2) {
             if (debug > 0)
                 syslog(LOG_INFO, "squidguard: url blocked.");
             return 1;
