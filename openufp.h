@@ -21,6 +21,7 @@ struct uf_request {
     char srcip[15];
     char dstip[15];
     char url[URL_SIZE];
+    char usr[URL_SIZE];
 };
 
 // cache
