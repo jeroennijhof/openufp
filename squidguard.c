@@ -118,12 +118,10 @@ int squidguard_backend_uid(FILE *sg_fd[2], char srcip[15], char srcusr[URL_SIZE]
     //Check username length; if there's nothing there, use the IP only:
     if (strlen(srcusr) < 1)
     {
-	syslog(LOG_INFO, "squidguard input: username missing, defaulting to IP notation: %s %s/ - - GET\n", url, srcip);
 	fprintf(sg_fd[1], "%s %s/ - - GET\n", url, srcip);
     }
     else
     {
-	syslog(LOG_INFO, "squidguard input: %s %s/ %s - GET\n", url, srcip, srcusr);
     	fprintf(sg_fd[1], "%s %s/ %s - GET\n", url, srcip, srcusr);
     }
 
