@@ -107,14 +107,26 @@ int squidguard_backend_uid(FILE *sg_fd[2], char srcip[15], char srcusr[URL_SIZE]
     if (debug > 2)
     {
         syslog(LOG_INFO, "squidguard: url check using IP and Username : IP: %s User: %s for url %s", srcip, srcusr, url);
-	syslog(LOG_INFO, "squidguard input: %s %s/ %s - GET\n", url, srcip, srcusr);
+	syslog(LOG_INFO, "squidguard: username strlength: %d", strlen(srcusr));
     }
 
     if (sg_fd[1] == NULL) {
         syslog(LOG_WARNING, "squidguard: could not open fd for input.");
         return 0;
     }
-    fprintf(sg_fd[1], "%s %s/ %s - GET\n", url, srcip, srcusr);
+
+    //Check username length; if there's nothing there, use the IP only:
+    if (strlen(srcusr) < 1)
+    {
+	syslog(LOG_INFO, "squidguard input: username missing, defaulting to IP notation: %s %s/ - - GET\n", url, srcip);
+	fprintf(sg_fd[1], "%s %s/ - - GET\n", url, srcip);
+    }
+    else
+    {
+	syslog(LOG_INFO, "squidguard input: %s %s/ %s - GET\n", url, srcip, srcusr);
+    	fprintf(sg_fd[1], "%s %s/ %s - GET\n", url, srcip, srcusr);
+    }
+
     fflush(sg_fd[1]);
 
     if (sg_fd[0] == NULL) {
