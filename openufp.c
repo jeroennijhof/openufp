@@ -24,7 +24,7 @@ void usage() {
     printf("OPTIONS:\n");
     printf("   -l PORT   on which port openufp will listen for incoming requests\n");
     printf("   -r URL    when url is denied the client will be redirected to this url; n2h2 only\n");
-    printf("   -u	 utilize User Identity info from capable Cisco products. Must use with -w as frontend\n");
+    printf("   -u        utilize User Identity info from capable Cisco products. Must use with -w as frontend\n");
     printf("   -c SECS   cache expire time in seconds; default 3600; 0 disables caching\n");
     printf("   -C URL    remove specified URL from cache\n");
     printf("   -d LEVEL  debug level 1-3\n\n");
@@ -54,6 +54,7 @@ int main(int argc, char**argv) {
     struct sockaddr_in openufp_addr;
     int local_port = 0;
     char *redirect_url = NULL;
+    char sg_redirect[URL_SIZE];
     int cache_exp_secs = 3600;
     int debug = 0;
     int frontend = 0;
@@ -64,6 +65,9 @@ int main(int argc, char**argv) {
     int squidguard = 0;
     int usrid = 0;
     int c;
+    char *https = "https://";
+//    bool isIp;
+
     while ((c = getopt(argc, argv, "l:r:c:C:d:nwp:f:gu")) != -1) {
         char *p;
         char hash[10];
@@ -230,7 +234,7 @@ int main(int argc, char**argv) {
                         request = n2h2_validate(n2h2_request, msgsize);
                     } else {
                         websns_request = (struct websns_req *)msg;
-			
+
 			//secret debug
                         if(debug > 3)
 			{
@@ -264,8 +268,26 @@ int main(int argc, char**argv) {
 
                     // URL request
                     if (request.type == N2H2_REQ || request.type == WEBSNS_REQ) {
-                        if (debug > 0)
-                            syslog(LOG_INFO, "received url request: %s", request.url);
+                        if (debug > 0) {
+                            syslog(LOG_INFO, "received url request - Original URL: %s", request.url);
+			}
+
+			// Handle HTTPS for N2H2 only since IP is provided in URI:
+			if (strstr(https, request.url) != NULL && request.type == N2H2_REQ) {
+			    //char substr[URL_SIZE];
+			    //substr = strndup(request.url+8, URL_SIZE);
+			    //isIp = isValidIpAddress(substr);
+
+			    if (debug > 0) {
+			    	syslog(LOG_INFO, "received HTTPS url request");
+				//if (isIp) {
+				//	syslog(LOG_INFO, "received HTTPS url request. Substring passed IP validation");
+				//}
+			    }
+
+			    //request.url = strndup(substr, strlen(substr));
+			   //free(substr);
+			}
 
                         // check if cached
                         get_hash(request.url, hash);
@@ -286,22 +308,35 @@ int main(int argc, char**argv) {
                         // parse url to squidguard
                         if (!cached && !denied && squidguard) {
 				// check whether srcip or srcip+usrid will be used:
+
 				if (usrid == 1)
 				{
-					denied = squidguard_backend_uid(sg_fd, request.srcip, request.usr, request.url, debug);
+					denied = squidguard_backend_uid(sg_fd, request.srcip, request.usr, request.url, sg_redirect, debug);
 				}
 				else
 				{
-                          		denied = squidguard_backend(sg_fd, request.srcip, request.url, debug);
+                          		denied = squidguard_backend(sg_fd, request.srcip, request.url, sg_redirect, debug);
 				}
                         }
 
                         if (denied) {
-                            if (frontend == N2H2) {
-                                n2h2_deny(cli_fd, n2h2_request, redirect_url);
-                            } else {
-                                websns_deny(cli_fd, websns_request, redirect_url);
+                            if (frontend == N2H2 && squidguard)
+			    {
+                                n2h2_deny(cli_fd, n2h2_request, sg_redirect);
                             }
+			    else if (frontend == WEBSNS && squidguard)
+			    {
+                                websns_deny(cli_fd, websns_request, sg_redirect);
+                            }
+			    else if (frontend == N2H2)
+			    {
+				n2h2_deny(cli_fd, n2h2_request, redirect_url);
+			    }
+			    else
+			    {
+				websns_deny(cli_fd, websns_request, redirect_url);
+			    }
+
                             if (debug > 0)
 			    {
 				if (usrid == 1)

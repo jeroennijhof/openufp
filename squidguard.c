@@ -67,7 +67,7 @@ int squidguard_closefd(FILE *sg_fd[2]) {
     return 0;
 }
 
-int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int debug) {
+int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], char *sg_redirect, int debug) {
     char redirect_url[URL_SIZE];
 
     if (debug > 2)
@@ -79,6 +79,7 @@ int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int d
         syslog(LOG_WARNING, "squidguard: could not open fd for input.");
         return 0;
     }
+
     fprintf(sg_fd[1], "%s %s/ - - GET\n", url, srcip);
     fflush(sg_fd[1]);
 
@@ -90,8 +91,13 @@ int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int d
         if (debug > 1)
             syslog(LOG_INFO, "squidguard: redirect_url (%s).", redirect_url);
         if (strlen(redirect_url) > 1) {
+            char *parse;
+            parse = strtok (redirect_url, " ");
+            strcpy(sg_redirect, parse);
+
             if (debug > 0)
-                syslog(LOG_INFO, "squidguard: url blocked.");
+                syslog(LOG_INFO, "squidguard: url blocked. parsed_red: %s -- sg_redirectURL: %s", parse, sg_redirect );
+
             return 1;
         }
         if (debug > 0)
@@ -101,7 +107,7 @@ int squidguard_backend(FILE *sg_fd[2], char srcip[15], char url[URL_SIZE], int d
     return 0;
 }
 
-int squidguard_backend_uid(FILE *sg_fd[2], char srcip[15], char srcusr[URL_SIZE], char url[URL_SIZE], int debug) {
+int squidguard_backend_uid(FILE *sg_fd[2], char srcip[15], char srcusr[URL_SIZE], char url[URL_SIZE], char *sg_redirect, int debug) {
     char redirect_url[URL_SIZE];
 
     if (debug > 2)
@@ -133,8 +139,13 @@ int squidguard_backend_uid(FILE *sg_fd[2], char srcip[15], char srcusr[URL_SIZE]
     }
     while (fgets(redirect_url, URL_SIZE, sg_fd[0]) != NULL) {
         if (strlen(redirect_url) > 2) {
+            char *parse;
+            parse = strtok (redirect_url, " ");
+            strcpy(sg_redirect, parse);
+
             if (debug > 0)
-                syslog(LOG_INFO, "squidguard: url blocked.");
+                syslog(LOG_INFO, "squidguard: url blocked. parsed_red: %s -- sg_redirectURL: %s", parse, sg_redirect );
+
             return 1;
         }
         if (debug > 0)
@@ -144,3 +155,9 @@ int squidguard_backend_uid(FILE *sg_fd[2], char srcip[15], char srcusr[URL_SIZE]
     return 0;
 }
 
+bool isValidIpAddress(char *ipAddress)
+{
+    struct sockaddr_in sa;
+    int result = inet_pton(AF_INET, ipAddress, &(sa.sin_addr));
+    return result != 0;
+}

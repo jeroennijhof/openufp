@@ -9,8 +9,10 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <time.h>
+#include <stdbool.h>
+#include <regex.h>
 
-#define VERSION "1.07"
+#define VERSION "1.08"
 #define URL_SIZE 65535
 #define REQ_SIZE 65535
 
