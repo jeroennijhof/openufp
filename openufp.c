@@ -24,6 +24,7 @@ void usage() {
     printf("OPTIONS:\n");
     printf("   -l PORT   on which port openufp will listen for incoming requests\n");
     printf("   -r URL    when url is denied the client will be redirected to this url; n2h2 only\n");
+    printf("   -u        utilize User Identity info from capable Cisco products. Must use with -w as frontend\n");
     printf("   -c SECS   cache expire time in seconds; default 3600; 0 disables caching\n");
     printf("   -C URL    remove specified URL from cache\n");
     printf("   -d LEVEL  debug level 1-3\n\n");
@@ -46,7 +47,6 @@ void usage() {
     printf("Report bugs to: jeroen@jeroennijhof.nl\n\n");
 }
 
-
 // Main function
 int main(int argc, char**argv) {
     int openufp_fd;
@@ -54,6 +54,7 @@ int main(int argc, char**argv) {
     struct sockaddr_in openufp_addr;
     int local_port = 0;
     char *redirect_url = NULL;
+    char sg_redirect[URL_SIZE];
     int cache_exp_secs = 3600;
     int debug = 0;
     int frontend = 0;
@@ -62,9 +63,12 @@ int main(int argc, char**argv) {
     char *proxy_deny_pattern = NULL;
     char *blacklist = NULL;
     int squidguard = 0;
-
+    int usrid = 0;
     int c;
-    while ((c = getopt(argc, argv, "l:r:c:C:d:nwp:f:g")) != -1) {
+    char *https = "https://";
+//    bool isIp;
+
+    while ((c = getopt(argc, argv, "l:r:c:C:d:nwp:f:gu")) != -1) {
         char *p;
         char hash[10];
         DB *cachedb;
@@ -116,12 +120,15 @@ int main(int argc, char**argv) {
             case 'g':
                 squidguard = 1;
                 break;
+            case 'u':
+                usrid = 1;
+                break;
             default:
                 usage();
                 exit(1);
         }
     }
-    if (frontend == 0 || ((proxy_ip == NULL || proxy_port == 0 || proxy_deny_pattern == NULL)
+    if (frontend == 0 || (frontend != WEBSNS && usrid == 1) || ((proxy_ip == NULL || proxy_port == 0 || proxy_deny_pattern == NULL)
                     && blacklist == NULL && squidguard == 0)) {
         usage();
         exit(1);
@@ -173,6 +180,11 @@ int main(int argc, char**argv) {
     syslog(LOG_INFO, "v%s: Jeroen Nijhof <jeroen@nijhofnet.nl>", VERSION); 
     syslog(LOG_INFO, "started listening on %d, waiting for requests...", local_port); 
 
+    if (usrid == 1 && debug > 0)
+    {
+        printf("openufp started with usrname support\n");
+    }
+
     if ((pid = fork()) == 0) {
         struct sockaddr_in cli_addr;
         socklen_t cli_size;
@@ -222,8 +234,16 @@ int main(int argc, char**argv) {
                         request = n2h2_validate(n2h2_request, msgsize);
                     } else {
                         websns_request = (struct websns_req *)msg;
-                        websns_convert(websns_request, msg, msgsize);
+
+			//secret debug
+                        if(debug > 3)
+			{
+		        	syslog(LOG_INFO, "Websense debug request output: size %d, vers_maj %d, vers_min %d, vers_pat %d, serial %d, code %d, desc %d, srcip %d, dstip %d, urlsize %d, url %s",
+                                                 websns_request->size, websns_request->vers_maj, websns_request->vers_min, websns_request->vers_pat, websns_request->serial, websns_request->code, websns_request->desc, websns_request->srcip, websns_request->dstip, websns_request->urlsize, websns_request->url);
+			}
+                        websns_convert(websns_request, msg, msgsize, debug);
                         request = websns_validate(websns_request, msgsize);
+
                     }
                     if (request.type == UNKNOWN) {
                         syslog(LOG_WARNING, "request type not known, closing connecion.");
@@ -248,8 +268,26 @@ int main(int argc, char**argv) {
 
                     // URL request
                     if (request.type == N2H2_REQ || request.type == WEBSNS_REQ) {
-                        if (debug > 0)
-                            syslog(LOG_INFO, "received url request.");
+                        if (debug > 0) {
+                            syslog(LOG_INFO, "received url request - Original URL: %s", request.url);
+			}
+
+			// Handle HTTPS for N2H2 only since IP is provided in URI:
+			if (strstr(https, request.url) != NULL && request.type == N2H2_REQ) {
+			    //char substr[URL_SIZE];
+			    //substr = strndup(request.url+8, URL_SIZE);
+			    //isIp = isValidIpAddress(substr);
+
+			    if (debug > 0) {
+			    	syslog(LOG_INFO, "received HTTPS url request");
+				//if (isIp) {
+				//	syslog(LOG_INFO, "received HTTPS url request. Substring passed IP validation");
+				//}
+			    }
+
+			    //request.url = strndup(substr, strlen(substr));
+			   //free(substr);
+			}
 
                         // check if cached
                         get_hash(request.url, hash);
@@ -267,20 +305,51 @@ int main(int argc, char**argv) {
                             denied = proxy_backend(proxy_ip, proxy_port, proxy_deny_pattern, request.url, debug);
                         }
 
-                        // parse url to proxy
+                        // parse url to squidguard
                         if (!cached && !denied && squidguard) {
-                            denied = squidguard_backend(sg_fd, request.srcip, request.url, debug);
+				// check whether srcip or srcip+usrid will be used:
+
+				if (usrid == 1)
+				{
+					denied = squidguard_backend_uid(sg_fd, request.srcip, request.usr, request.url, sg_redirect, debug);
+				}
+				else
+				{
+                          		denied = squidguard_backend(sg_fd, request.srcip, request.url, sg_redirect, debug);
+				}
                         }
 
                         if (denied) {
-                            if (frontend == N2H2) {
-                                n2h2_deny(cli_fd, n2h2_request, redirect_url);
-                            } else {
-                                websns_deny(cli_fd, websns_request, redirect_url);
+                            if (frontend == N2H2 && squidguard)
+			    {
+                                n2h2_deny(cli_fd, n2h2_request, sg_redirect);
                             }
+			    else if (frontend == WEBSNS && squidguard)
+			    {
+                                websns_deny(cli_fd, websns_request, sg_redirect);
+                            }
+			    else if (frontend == N2H2)
+			    {
+				n2h2_deny(cli_fd, n2h2_request, redirect_url);
+			    }
+			    else
+			    {
+				websns_deny(cli_fd, websns_request, redirect_url);
+			    }
+
                             if (debug > 0)
-                                syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s",
-                                                 request.srcip, request.dstip, request.url);
+			    {
+				if (usrid == 1)
+				{
+                                	syslog(LOG_INFO, "url denied: srcip %s, srcusr %s, dstip %s, url %s",
+                                                 request.srcip, request.usr, request.dstip, request.url);
+				}
+				else
+				{
+                                        syslog(LOG_INFO, "url denied: srcip %s, dstip %s, url %s",
+                                                request.srcip, request.dstip, request.url);
+				}
+			    }
                         } else {
                             if (frontend == N2H2) {
                                 n2h2_accept(cli_fd, n2h2_request);

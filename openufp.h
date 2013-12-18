@@ -9,8 +9,10 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <time.h>
+#include <stdbool.h>
+#include <regex.h>
 
-#define VERSION "1.07"
+#define VERSION "1.08"
 #define URL_SIZE 65535
 #define REQ_SIZE 65535
 
@@ -21,6 +23,7 @@ struct uf_request {
     char srcip[15];
     char dstip[15];
     char url[URL_SIZE];
+    char usr[URL_SIZE];
 };
 
 // cache

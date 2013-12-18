@@ -72,10 +72,9 @@ void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url) 
 }
 
 struct uf_request websns_validate(struct websns_req *websns_request, int msgsize) {
-    struct uf_request request = { 0, {0}, {0}, "" };
+    struct uf_request request = { 0, {0}, {0}, "", "" };
     struct in_addr srcip, dstip;
-    int i;
-
+    int i, j;
     request.type = UNKNOWN;
 
     if (msgsize == WEBSNS_ALIVE_SIZE) {
@@ -89,21 +88,37 @@ struct uf_request websns_validate(struct websns_req *websns_request, int msgsize
         dstip.s_addr = websns_request->dstip;
         snprintf(request.srcip, sizeof(request.srcip), "%s", inet_ntoa(srcip));
         snprintf(request.dstip, sizeof(request.dstip), "%s", inet_ntoa(dstip));
+
         for(i = 0; i < ntohs(websns_request->urlsize); i++)
-            request.url[i] = websns_request->url[i];
+        {
+		request.url[i] = websns_request->url[i];
+	}
+	//get remaining info in payload
+	i = 0;
+	//Offset is 2+10 for the preceding TACACS:/// string
+	for(j = (ntohs(websns_request->urlsize)+12); j < ntohs(websns_request->size); j++)
+	{
+		request.usr[i] = websns_request->url[j];
+		i++;
+	}
+
         return request;
     }
 
     return request;
 }
 
-void websns_convert(struct websns_req *websns_request, char msg[REQ_SIZE], int msgsize) {
+void websns_convert(struct websns_req *websns_request, char msg[REQ_SIZE], int msgsize, int debug) {
     char newmsg[REQ_SIZE];
     int offset = 0;
     int i;
 
     // check if it's version 1
     if (msgsize > WEBSNS_REQ_SIZE && ntohs(websns_request->code) == WEBSNS_REQ && ntohs(websns_request->urlsize) == 0) {
+	if (debug > 2)
+	{
+		syslog(LOG_INFO,"Websense v1 packet received; converting to v4");
+	}
         // convert to version 4
         for (i = 0; i < (msgsize - 2); i++) {
             if (i == 24)

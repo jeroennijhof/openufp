@@ -57,7 +57,7 @@ void n2h2_deny(int fd, struct n2h2_req *n2h2_request, char *redirect_url) {
 }
 
 struct uf_request n2h2_validate(struct n2h2_req *n2h2_request, int msgsize) {
-    struct uf_request request = { 0, {0}, {0}, "" };
+    struct uf_request request = { 0, {0}, {0}, "", "" };
     struct in_addr srcip, dstip;
     int i;
 
