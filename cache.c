@@ -25,14 +25,12 @@ DB *open_cache() {
     int ret;
 
     if ((ret = db_create(&dbp, NULL, 0)) != 0) {
-        syslog(LOG_WARNING, "cache: %s.", db_strerror(ret));
-        free(dbp);
+        syslog(LOG_WARNING, "cache db_create: %s.", db_strerror(ret));
         return NULL;
     }
     if ((ret = dbp->open(dbp, NULL, DATABASE, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
-        syslog(LOG_WARNING, "cache: %s.", db_strerror(ret));
+        syslog(LOG_WARNING, "cache open: %s.", db_strerror(ret));
         close_cache(dbp, 0);
-        free(dbp);
         return NULL;
     } 
     return dbp;

@@ -89,18 +89,16 @@ struct uf_request websns_validate(struct websns_req *websns_request, int msgsize
         snprintf(request.srcip, sizeof(request.srcip), "%s", inet_ntoa(srcip));
         snprintf(request.dstip, sizeof(request.dstip), "%s", inet_ntoa(dstip));
 
-        for(i = 0; i < ntohs(websns_request->urlsize); i++)
-        {
-		request.url[i] = websns_request->url[i];
-	}
+        for (i = 0; i < ntohs(websns_request->urlsize); i++) {
+            request.url[i] = websns_request->url[i];
+        }
 	//get remaining info in payload
 	i = 0;
-	//Offset is 2+10 for the preceding TACACS:/// string
-	for(j = (ntohs(websns_request->urlsize)+12); j < ntohs(websns_request->size); j++)
-	{
-		request.usr[i] = websns_request->url[j];
-		i++;
-	}
+	//offset is 2+10 for the preceding TACACS:/// string
+        for (j = (ntohs(websns_request->urlsize)+12); j < ntohs(websns_request->size); j++) {
+            request.usr[i] = websns_request->url[j];
+            i++;
+        }
 
         return request;
     }
@@ -115,10 +113,9 @@ void websns_convert(struct websns_req *websns_request, char msg[REQ_SIZE], int m
 
     // check if it's version 1
     if (msgsize > WEBSNS_REQ_SIZE && ntohs(websns_request->code) == WEBSNS_REQ && ntohs(websns_request->urlsize) == 0) {
-	if (debug > 2)
-	{
-		syslog(LOG_INFO,"Websense v1 packet received; converting to v4");
-	}
+        if (debug > 2) {
+            syslog(LOG_INFO,"Websense v1 packet received; converting to v4");
+        }
         // convert to version 4
         for (i = 0; i < (msgsize - 2); i++) {
             if (i == 24)
