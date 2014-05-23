@@ -56,14 +56,15 @@ void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url) 
     websns_resp_deny.desc = htons(1);
     websns_resp_deny.cat = htons(0);
     websns_resp_deny.urlsize = htons(0);
+    snprintf(websns_resp_deny.url, 11, "Location: ");
 
     if (redirect_url != NULL) {
-        urlsize = strlen(redirect_url) + 1;
+        urlsize = strlen(redirect_url) + 10 + 1;
         if (urlsize < (URL_SIZE - WEBSNS_HDR)) {
             websns_resp_deny.size = htons(WEBSNS_HDR + urlsize);
             websns_resp_deny.urlsize = htons(urlsize);
             for(i = 0; i < urlsize; i++)
-                websns_resp_deny.url[i] = redirect_url[i];
+                websns_resp_deny.url[10 + i] = redirect_url[i];
         }
     }
 
