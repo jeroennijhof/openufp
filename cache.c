@@ -17,7 +17,7 @@ void get_hash(const char *s, char hash[10]) {
         /* hash = hash * 33 ^ c */
         _hash = ((_hash << 5) + _hash) ^ c;
     }
-    snprintf(hash, sizeof(hash), "%u", _hash);
+    snprintf(hash, 10, "%u", _hash);
 }
 
 DB *open_cache() {
