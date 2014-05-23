@@ -20,8 +20,8 @@
 #define UNKNOWN 65535
 struct uf_request {
     uint16_t type;
-    char srcip[15];
-    char dstip[15];
+    char srcip[16];
+    char dstip[16];
     char url[URL_SIZE];
     char usr[URL_SIZE];
 };

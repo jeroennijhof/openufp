@@ -67,7 +67,7 @@ int squidguard_closefd(FILE *sg_fd[2]) {
     return 0;
 }
 
-int squidguard_backend(FILE *sg_fd[2], char srcip[15], char srcusr[URL_SIZE], char url[URL_SIZE], char *sg_redirect, int debug) {
+int squidguard_backend(FILE *sg_fd[2], char srcip[16], char srcusr[URL_SIZE], char url[URL_SIZE], char *sg_redirect, int debug) {
     char redirect_url[URL_SIZE];
 
     //Check user; if empty, use ip only:
