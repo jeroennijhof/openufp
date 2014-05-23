@@ -10,7 +10,7 @@ Install
 =====
 
 Just type "make" followed by "sudo make install".
-Make sure you have libdb and libdb-dev installed, preferable version 5.1.
+Make sure you have libdb and libdb-dev installed, preferable version 5.1 or higher.
 
 
 Usage
