@@ -45,7 +45,6 @@ void websns_accept(int fd, struct websns_req *websns_request) {
 void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url) {
     struct websns_resp websns_resp_deny;
     int urlsize = 0;
-    int i = 0;
 
     websns_resp_deny.size = htons(WEBSNS_HDR);
     websns_resp_deny.vers_maj = websns_request->vers_maj;
@@ -58,12 +57,11 @@ void websns_deny(int fd, struct websns_req *websns_request, char *redirect_url) 
     websns_resp_deny.urlsize = htons(0);
 
     if (redirect_url != NULL) {
-        urlsize = strlen(redirect_url) + 1;
+        snprintf(websns_resp_deny.url, URL_SIZE, "<HTML><HEAD><META HTTP-EQUIV=\"refresh\" CONTENT=\"0;URL=%s\"></HEAD></HTML>", redirect_url);
+        urlsize = strlen(websns_resp_deny.url) + 1;
         if (urlsize < (URL_SIZE - WEBSNS_HDR)) {
             websns_resp_deny.size = htons(WEBSNS_HDR + urlsize);
             websns_resp_deny.urlsize = htons(urlsize);
-            for(i = 0; i < urlsize; i++)
-                websns_resp_deny.url[i] = redirect_url[i];
         }
     }
 
