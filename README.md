@@ -1,15 +1,15 @@
-# Openufp
+## Openufp
 Open URL Filtering Proxy is an URL Filtering Server for N2H2 or Websense compatible devices.
 It supports multiple back ends like url blacklist file, squidguard and proxy servers like dansguardian.
 This project has been known as n2h2p.
 
 
-# Install
+## Install
 Just type "make" followed by "sudo make install".
 Make sure you have libdb and libdb-dev installed, preferable version 5.1 or higher.
 
 
-# Usage
+## Usage
 ```
 Usage: openufp [OPTIONS] <-n|-w> <BACKEND>
 
@@ -33,8 +33,7 @@ BACKEND:
    -g        use the squidGuard backend
 ```
 
-
-# Note
-The default location of the cache db is /var/cache/openufp/cache.db.
+## Note
+The default location of the cache db is /var/cache/openufp/cache.db
 When squidguard backend is used be sure that this program has rw permissions
 to the squidguard db files.
