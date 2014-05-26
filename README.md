@@ -34,6 +34,6 @@ BACKEND:
 ```
 
 ## Note
-The default location of the cache db is /var/cache/openufp/cache.db
-When squidguard backend is used be sure that this program has rw permissions
+The default location of the cache db is **/var/cache/openufp/cache.db**<br>
+When squidguard backend is used be sure that this program has **rw** permissions
 to the squidguard db files.
