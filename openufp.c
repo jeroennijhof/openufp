@@ -190,10 +190,6 @@ int main(int argc, char**argv) {
                 int denied = 0;
                 char msg[REQ_SIZE];
                 struct uf_request request;
-                FILE *sg_fd[2];
-
-                if (squidguard)
-                    squidguard_getfd(sg_fd);
 
                 DB *cachedb = NULL;
                 if (cache_exp_secs > 0)
@@ -210,8 +206,6 @@ int main(int argc, char**argv) {
                     msgsize = recvfrom(cli_fd, msg, REQ_SIZE, 0, (struct sockaddr *)&cli_addr, &cli_size);
                     if (msgsize < 1) {
                         syslog(LOG_WARNING, "connection closed by client.");
-                        if (squidguard)
-                            squidguard_closefd(sg_fd);
                         close_cache(cachedb, debug);
                         close(cli_fd);
                         exit(1);
@@ -236,8 +230,6 @@ int main(int argc, char**argv) {
                     }
                     if (request.type == UNKNOWN) {
                         syslog(LOG_WARNING, "request type not known, closing connecion.");
-                        if (squidguard)
-                            squidguard_closefd(sg_fd);
                         close_cache(cachedb, debug);
                         close(cli_fd);
                         exit(1);
@@ -286,7 +278,7 @@ int main(int argc, char**argv) {
 
                         // parse url to squidguard
                         if (!cached && !denied && squidguard) {
-                            denied = squidguard_backend(sg_fd, request.srcip, request.usr, request.url, sg_redirect, debug);
+                            denied = squidguard_backend(request.srcip, request.usr, request.url, sg_redirect, debug);
                         }
 
                         if (denied) {
@@ -320,8 +312,6 @@ int main(int argc, char**argv) {
                         denied = 0;
                     }
                 }
-                if (squidguard)
-                    squidguard_closefd(sg_fd);
                 close_cache(cachedb, debug);
             }
             close(cli_fd);
