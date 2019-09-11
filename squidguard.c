@@ -32,38 +32,32 @@ int squidguard_backend(char srcip[16], char srcusr[URL_SIZE], char url[URL_SIZE]
     snprintf(cmd, URL_SIZE, "echo '%s %s/ - - GET' | /usr/bin/squidGuard", url, srcip);
     sg_fd = popen(cmd, "r");
 
-    if (sg_fd == NULL)
-    {
+    if (sg_fd == NULL) {
         syslog(LOG_WARNING, "squidguard: couldn't popen() for output. Verify squidGuard: /usr/bin/squidGuard");
-	return 0;
+        return 0;
     }
 
-    while (fgets(redirect_url, URL_SIZE, sg_fd) != NULL)
-    {
-        int rl = 0;
-        rl = strlen(redirect_url);
-
-        if (debug > 2)
-        {
-            syslog(LOG_INFO, "squidguard: redirect_url length: %d, post fgets: %s", rl, redirect_url );
+    while (fgets(redirect_url, URL_SIZE, sg_fd) != NULL) {
+        if (debug > 2) {
+            syslog(LOG_INFO, "squidguard: redirect_url length: %d, post fgets: %s", (int)strlen(redirect_url), redirect_url);
         }
 
-        if (rl > 2)
-        {
+        if (strstr(redirect_url, "url=") != NULL) {
             char *parse;
-            parse = strtok (redirect_url, " \t");
+            parse = strtok(redirect_url, "\"");
+            parse = strtok(NULL, "\"");
             strcpy(sg_redirect, parse);
 
             if (debug > 0)
-                syslog(LOG_INFO, "squidguard: url blocked. parsed_redirect: %s, sg_redirectURL: %s", parse, sg_redirect );
+                syslog(LOG_INFO, "squidguard: url blocked. parsed_redirect: %s, sg_redirectURL: %s", parse, sg_redirect);
 
-	    pclose(sg_fd);
+            pclose(sg_fd);
             return 1;
         }
         if (debug > 0)
             syslog(LOG_INFO, "squidguard: url accepted.");
 
-	pclose(sg_fd);
+        pclose(sg_fd);
         return 0;
 
     }
