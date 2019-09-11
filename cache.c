@@ -17,7 +17,8 @@ void get_hash(const char *s, char hash[10]) {
         /* hash = hash * 33 ^ c */
         _hash = ((_hash << 5) + _hash) ^ c;
     }
-    snprintf(hash, 10, "%u", _hash);
+    sprintf(hash, "%.10u", _hash);
+    hash[10] = '\0';
 }
 
 DB *open_cache() {
@@ -67,8 +68,8 @@ int in_cache(DB *dbp, char hash[10], int expire_sec, int debug) {
     if ((ret = dbp->get(dbp, NULL, &key, &data, 0)) == 0) {
         if (strcmp((char *)data.data, sec) > 0) {
             if (debug > 0)
-                syslog(LOG_INFO, "cache: hash %s retrieved, time %s expire at %s.",
-                        (char *)key.data, (char *)data.data, sec);
+                syslog(LOG_INFO, "cache: hash %s retrieved, expiring at %s + %d.",
+                        (char *)key.data, (char *)data.data, expire_sec);
             return 1;
         }
         if (debug > 0)
